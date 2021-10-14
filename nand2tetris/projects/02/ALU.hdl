@@ -42,9 +42,16 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-       Mux (a=true, b=false, sel=true, out=ng);
-       Or8Way (in=outPut[0..7], out=r1);
-       Or8Way (in=outPut[8..15], out=r2);
-       Or(a=or1, b=or2, out=isNotZero);
-       Not (in=isNotZero, out=zr);
+    Mux16(a=x ,b=false ,sel=zx ,out=afterzx );
+    Not16(in=afterzx ,out=notzx );
+    Mux16(a=afterzx ,b=notzx ,sel=nx ,out=afternx );
+    Mux16(a=y ,b=false ,sel=zy ,out=afterzy );
+    Not16(in=afterzy ,out=notzy );
+    Mux16(a=afterzy ,b=notzy ,sel=ny ,out=afterny );
+    Add16(a=afternx ,b=afterny ,out=addxy );
+    And16(a=afternx ,b=afterny ,out=andxy );
+    Mux16(a=andxy ,b=addxy ,sel=f ,out=preout );
+    Not16(in=preout ,out=notpreout );
+    Mux16(a=preout ,b=notpreout ,sel = no, out=outPut );
+
 }
