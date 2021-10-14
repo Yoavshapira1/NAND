@@ -42,5 +42,9 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+       Mux (a=true, b=false, sel=true, out=ng);
+       Or8Way (in=outPut[0..7], out=r1);
+       Or8Way (in=outPut[8..15], out=r2);
+       Or(a=or1, b=or2, out=isNotZero);
+       Not (in=isNotZero, out=zr);
 }
