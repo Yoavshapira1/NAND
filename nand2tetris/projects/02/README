@@ -1,7 +1,7 @@
-bartsimp, lisasimp
+yoavshapira1, nitaiseri
 ===============================================================================
-Bart Simpson, ID 011111111, bart@mail.huji.ac.il
-Lisa Simpson, ID 022222222, lisa@mail.huji.ac.il
+Yoav Shapira, ID 312492838, yoav.shapira@mail.huji.ac.il
+Nitai Seri, ID 311525505, nitaiseri@mail.huji.ac.il
 ===============================================================================
 
                            Project 2 - Boolean Arithmetic
@@ -11,14 +11,16 @@ Lisa Simpson, ID 022222222, lisa@mail.huji.ac.il
 Submitted Files
 ---------------
 README - This file.
-ShiftLeft.hdl -
-ShiftRight.hdl -
-HalfAdder.hdl - 
-FullAdder.hdl - 
-Add16.hdl - 
-Inc16.hdl - 
-ALU.hdl - 
-Include other files required by your project, if there are any.
+ShiftLeft.hdl - Implemented chip
+ShiftRight.hdl -Implemented chip
+HalfAdder.hdl - Implemented chip
+FullAdder.hdl - Implemented chip
+Add16.hdl - Implemented chip
+Inc16.hdl - Implemented chip
+ALU.hdl - Implemented chip
+IsNegate16 - return 1 if the 16 bit represent negative number
+Same16 - return the same 16 bits. require for use the final output.
+Or16Way - same as Or8way just for 16 bits.
 
 Remarks
 -------
