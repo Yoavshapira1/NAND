@@ -15,4 +15,4 @@ CHIP Inc16 {
     PARTS:
     Not16(in[0] = false ,in[1..15]=true, out=one );
     Add16(a=in ,b=one ,out=out );
-}
+    }
