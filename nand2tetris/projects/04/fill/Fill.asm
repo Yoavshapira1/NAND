@@ -14,26 +14,26 @@
 (RESTART)
     @8192
     D=A
-    @pixels
+    @pixel
     M=D
 
 (LOOP)
-    @pixels
+    @pixel
     M=M-1
     D=M
     @RESTART
-    D;JLE
+    D;JLT
     @KBD
     D=M
+    @WHITE
+    D;JEQ
     @BLACK
     D;JNE
-    @WHITE
-    0;JMP
 
 (WHITE)
     @SCREEN
     D=A
-    @pixels
+    @pixel
     A=D+M
     M=0
     @LOOP
@@ -42,7 +42,7 @@
 (BLACK)
     @SCREEN
     D=A
-    @pixels
+    @pixel
     A=D+M
     M=-1
     @LOOP
