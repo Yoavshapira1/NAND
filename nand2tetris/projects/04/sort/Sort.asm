@@ -19,6 +19,12 @@
 @i
 M=0
 
+//check if only one number
+@R15
+D=M
+@END
+D-1;JEQ
+
 (OUTERLOOP)
     @swapped
     M=0
