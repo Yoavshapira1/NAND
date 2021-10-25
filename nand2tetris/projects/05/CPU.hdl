@@ -39,53 +39,54 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // De-Code the instruction
-            Or (a=instruction[15], b=false, out=isCinstruction);
-            Not (in=isCinstruction, out=isAinstruction);
-            Or (a=instruction[12], b=false, out=imMload);
-            Or (a=instruction[11], b=false, out=zx);
-            Or (a=instruction[10], b=false, out=nx);
-            Or (a=instruction[9], b=false, out=zy);
-            Or (a=instruction[8], b=false, out=ny);
-            Or (a=instruction[7], b=false, out=f);
-            Or (a=instruction[6], b=false, out=no);
-            Or (a=instruction[5], b=false, out=regAload);
-            Or (a=instruction[4], b=false, out=regDload);
-            Or (a=instruction[3], b=false, out=regMload);
-            Or (a=instruction[2], b=false, out=lower);
-            Or (a=instruction[1], b=false, out=eq);
-            Or (a=instruction[0], b=false, out=greater);
+        // De-Code the instruction
+        Or (a=instruction[15], b=false, out=cType);
+        Not (in=cType, out=aType);
+        Or (a=instruction[12], b=false, out=inMload);
+        Or (a=instruction[11], b=false, out=zx);
+        Or (a=instruction[10], b=false, out=nx);
+        Or (a=instruction[9], b=false, out=zy);
+        Or (a=instruction[8], b=false, out=ny);
+        Or (a=instruction[7], b=false, out=f);
+        Or (a=instruction[6], b=false, out=no);
+        Or (a=instruction[5], b=false, out=regAload);
+        Or (a=instruction[4], b=false, out=regDload);
+        Or (a=instruction[3], b=false, out=regMload);
+        Or (a=instruction[2], b=false, out=lower);
+        Or (a=instruction[1], b=false, out=eq);
+        Or (a=instruction[0], b=false, out=greater);
 
-            // Load A, if needed, either from the ALU or the instruction
-            And (a=isCinstruction, b=regAload, out=regAtoALU);
-            Mux16 (a=instruction, b=ALUoutput, sel=regAtoALU, out=MUx16First);
-            Or (a=isAinstruction, b=regAload, out=Aload);
-            Register (in=MUx16First, load=Aload, out=A);
+        // Load A:
+        // Load iff: load A register bit is 1, or this is A type instruction
+        Or (a=aType, b=regAload, out=Aload);
+        // If C type (operation) -> Choose ALU out
+        // If A type (assertion) -> Choose the instruction itself
+        Mux16 (a=instruction, b=ALUoutput, sel=cType, out=MUx16First);
+        ARegister (in=MUx16First, load=Aload, out=A, out[0..14]=addressM);
 
-            // Load M if needed
-            Mux16 (a=A, b=inM, sel=imMload, out=Mux16Second);
+        // Load M if this is an operation, and M should be the input
+        And (a=cType, b=inMload, out=Mload);
+        Mux16 (a=A, b=inM, sel=Mload, out=Mux16Second);
 
-            // Load D, if needed. either from the ALU of the
-            And (a=isCinstruction, b=regDload, out=Dload);
-            Register (in=ALUoutput, load=Dload, out=D);
+        // Load D, if needed, either from the ALU of the
+        And (a=cType, b=regDload, out=Dload);
+        DRegister (in=ALUoutput, load=Dload, out=D);
 
-            ALU (x=D, y=Mux16Second,
-                zx=zx, nx=nx, zy=zy, ny=ny, f=f, no=no,
-                out=ALUoutput, zr=zr, ng=ng);
+        ALU (x=D, y=Mux16Second,
+            zx=zx, nx=nx, zy=zy, ny=ny, f=f, no=no,
+            out=ALUoutput, out=outM, zr=zr, ng=ng);
 
-            // PC & JMP Condition implementation
-            And (a=lower, b=ng, out=L);
-            And (a=eq, b=zr, out=E);
-            Not (in=ng, out=NotNg);
-            Not (in=zr, out=NotZr);
-            And (a=NotZr, b=NotNg, out=pos);
-            And (a=greater, b=pos, out=G);
-            Or (a=L, b=E, out=LE);
-            Or (a=LE, b=G, out=jmp);
-            Not (in=jmp, out=inc);
-            PC (in=A, load=jmp, inc=inc, reset=reset, out[0..14]=pc);
-
-            Or16(a=ALUoutput, b=false, out=outM);
-            Or16 (a=A, b=false, out[0..14]=addressM);
-            And(a=regMload, b=isCinstruction, out=writeM);
+        // PC & JMP Condition implementation
+        And (a=lower, b=ng, out=L);
+        And (a=eq, b=zr, out=E);
+        Not (in=ng, out=NotNg);
+        Not (in=zr, out=NotZr);
+        And (a=NotZr, b=NotNg, out=pos);
+        And (a=greater, b=pos, out=G);
+        Or (a=L, b=E, out=LE);
+        Or (a=LE, b=G, out=SatCond);
+        And (a=cType, b=SatCond, out=jmp);
+        Not (in=jmp, out=inc);
+        PC (in=A, load=jmp, inc=inc, reset=reset, out[0..14]=pc);
+        And (a=regMload, b=cType, out=writeM);
 }
