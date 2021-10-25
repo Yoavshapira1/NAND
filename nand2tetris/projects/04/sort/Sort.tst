@@ -6,10 +6,14 @@
 load Sort.asm,
 output-file Sort.out,
 compare-to Sort.cmp,
-output-list RAM[0]%D1.6.1 RAM[1]%D1.6.1 RAM[2]%D1.6.1 RAM[3]%D1.6.1 RAM[4]%D1.6.1 RAM[5]%D1.6.1 RAM[6]%D1.6.1 RAM[7]%D1.6.1 RAM[8]%D1.6.1 RAM[9]%D1.6.1 RAM[10]%D1.6.1 RAM[11]%D1.6.1 RAM[12]%D1.6.1 RAM[13]%D1.6.1 RAM[14]%D1.6.1 RAM[15]%D1.6.1;
+output-list RAM[14]%D3.6.3 RAM[15]%D3.6.3 RAM[2048]%D3.6.3 RAM[2049]%D3.6.3 RAM[2050]%D3.6.3 RAM[2051]%D3.6.3;
 
-set RAM[11] 0,
-set RAM[14] 11,
+set PC 0,
+set RAM[2048] 0,
+set RAM[2049] 0,
+set RAM[2050] 0,
+set RAM[2051] 0,
+set RAM[14] 2048,
 set RAM[15] 1;
 repeat 30000 {
   ticktock;
@@ -17,11 +21,11 @@ repeat 30000 {
 output;
 
 set PC 0,
-set RAM[10] -89,
-set RAM[11] 5,
-set RAM[12] 16,
-set RAM[13] 15,
-set RAM[14] 10,
+set RAM[2048] -89,
+set RAM[2049] 5,
+set RAM[2050] 16,
+set RAM[2051] 15,
+set RAM[14] 2048,
 set RAM[15] 4;
 repeat 30000 {
   ticktock;

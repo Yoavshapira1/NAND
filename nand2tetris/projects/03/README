@@ -1,7 +1,7 @@
-yoavshapira1, nitaiseri
+bartsimp, lisasimp
 ===============================================================================
-Yoav Shapira, ID 312492838, yoav.shapira@mail.huji.ac.il
-Nitai Seri, ID 311525505, nitaiseri@mail.huji.ac.il
+Bart Simpson, ID 011111111, bart@mail.huji.ac.il
+Lisa Simpson, ID 022222222, lisa@mail.huji.ac.il
 ===============================================================================
 
                            Project 3 - Sequential Logic
@@ -11,17 +11,15 @@ Nitai Seri, ID 311525505, nitaiseri@mail.huji.ac.il
 Submitted Files
 ---------------
 README - This file.
-a/Bit.hdl - Implemented chip
-a/PC.hdl - Implemented chip
-a/RAM8.hdl - Implemented chip
-a/RAM64.hdl - Implemented chip
-a/Register.hdl - Implemented chip
-b/RAM4K.hdl - Implemented chip
-b/RAM16K.hdl - Implemented chip
-b/RAM512.hdl -  Implemented chip
-Same16 - return the same 16 bits. require for use the final output.
-Same - return the same one bit. require for use the final output.
-
+a/Bit.hdl - 
+a/PC.hdl - 
+a/RAM8.hdl - 
+a/RAM64.hdl - 
+a/Register.hdl - 
+b/RAM4K.hdl - 
+b/RAM16K.hdl - 
+b/RAM512.hdl -  
+Include other files required by your project, if there are any.
 
 Remarks
 -------
