@@ -16,5 +16,17 @@ CHIP ExtendAlu {
      OUT out[16], zr, ng;
      
      PARTS:
-     // Put you code here:
+     ALU(x=x ,y=y ,zx=instruction[5] ,nx=instruction[4] ,zy=instruction[3] ,ny=instruction[2] ,f=instruction[1]
+                                        ,no=instruction[0] ,out=outR ,zr=zrR ,ng=ngR );
+     ShiftLeft(in=x ,out=xShiftL);
+     ShiftLeft(in=y ,out=yShiftL);
+     ShiftRight(in=x ,out=xShiftR);
+     ShiftRight(in=y ,out=yShiftR);
+     Mux4Way16(a=yShiftR ,b=yShiftL ,c=xShiftR ,d=xShiftL ,sel[0]=instruction[5] ,sel[1]=instruction[4] ,out=outS );
+     IsNegative16(in=outS,out=ngS);
+     Or16Way(in=outS, out=tempzrS);
+     Not(in=tempzrS, out=zrS);
+     Mux16(a=outS ,b=outR ,sel=instruction[8] ,out=out );
+     Mux(a=zrS ,b=zrR ,sel=instruction[8] ,out=zr );
+     Mux(a=ngS ,b=ngR ,sel=instruction[8] ,out=ng );
 }

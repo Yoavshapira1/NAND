@@ -161,5 +161,5 @@ tick, output, tock, output;
 set instruction %B1010110000010000, // D = D<<
 tick, output, tock, output;
 
-set instruction %B1011000000010000, // D = M >>
+set instruction %B1010010000010000, // D = D>>
 tick, output, tock, output;
