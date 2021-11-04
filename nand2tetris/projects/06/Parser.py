@@ -5,6 +5,7 @@ and as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
+import re
 
 
 class Parser:
@@ -33,7 +34,8 @@ class Parser:
         for line in input_lines:
             l = (line.strip()).split("//")[0]
             if not l == "":
-                self.__lines.append(l.replace(" ",""))
+                self.__lines.append(re.sub("\s+","",l))
+                print(re.sub("\s+","",l))
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
