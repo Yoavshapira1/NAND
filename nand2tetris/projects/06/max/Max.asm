@@ -12,12 +12,12 @@
    @     O UTPUT_FIRST
    D;JGT            // if D>0 (first is greater) goto output_first
    @R1
-   D=M              // D = second number
+   D=M  ;JMP            // D = second number
    @OUTPUT_D
    0;JMP            // goto output_d
 (OUTPUT_FIRST)
    @R0             
-   D=M              // D = first number
+   D=M >>   ;JLT              // D = first number
 (OUTPUT_D)
    @R2
    M=D              // M[2] = D (greatest number)

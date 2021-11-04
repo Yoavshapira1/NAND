@@ -35,7 +35,6 @@ class Parser:
             l = (line.strip()).split("//")[0]
             if not l == "":
                 self.__lines.append(re.sub("\s+","",l))
-                print(re.sub("\s+","",l))
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
@@ -94,14 +93,25 @@ class Parser:
         if self.command_type() == "L_COMMAND":
             return self.__lines[self.__curLine].replace("(", "").replace(")", "")
 
+    def split_c_instruction(self):
+        """
+        Split the C_COMMAND line into components
+        """
+        dest_split = self.__lines[self.__curLine].split("=")
+        dest, comp = (dest_split[0],dest_split[1]) if len(dest_split) == 2\
+            else ("",dest_split[0])
+        comp_split = comp.split(";")
+        comp, jump = (comp_split[0],comp_split[1]) if len(comp_split) == 2 \
+            else (comp_split[0],"")
+        return dest, comp, jump
+
     def dest(self) -> str:
         """
         Returns:
             str: the dest mnemonic in the current C-command. Should be called 
             only when commandType() is "C_COMMAND".
         """
-        dest_split = self.__lines[self.__curLine].split("=")
-        return dest_split[0] if len(dest_split) == 2 else ""
+        return self.split_c_instruction()[0]
 
     def comp(self) -> str:
         """
@@ -109,10 +119,7 @@ class Parser:
             str: the comp mnemonic in the current C-command. Should be called 
             only when commandType() is "C_COMMAND".
         """
-        if self.dest() is not "":
-            return self.__lines[self.__curLine].split("=")[1]
-        else:
-            return self.__lines[self.__curLine].split(";")[0]
+        return self.split_c_instruction()[1]
 
     def jump(self) -> str:
         """
@@ -120,8 +127,4 @@ class Parser:
             str: the jump mnemonic in the current C-command. Should be called 
             only when commandType() is "C_COMMAND".
         """
-        jmp_split = self.__lines[self.__curLine].split(";")
-        if len(jmp_split) == 2:
-            return jmp_split[1]
-        else:
-            return ""
+        return self.split_c_instruction()[2]
