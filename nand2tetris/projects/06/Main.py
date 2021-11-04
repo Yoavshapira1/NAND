@@ -11,6 +11,46 @@ from SymbolTable import SymbolTable
 from Parser import Parser
 from Code import Code
 
+def read_loops(parser : Parser, symbols : SymbolTable) -> None:
+    """
+    Read the Loops symbols in a parser object and write them to corresponds
+    SymbolTable object
+    """
+    while parser.has_more_commands():   # First read LOOP symbols
+        if parser.command_type() == "L_COMMAND":
+            symbols.add_entry(parser.symbol(), parser.address())
+            parser.deleteLine()
+        parser.advance()
+    parser.reset()
+
+def write_code(parser : Parser, symbols : SymbolTable,
+               output_file: typing.TextIO) -> None:
+    """
+    Write the code for a given parser and a corresponds symbols table, to the
+    gievn path of output file
+    """
+    s=0
+    while parser.has_more_commands():   # Than read commands
+        code = ""
+        if parser.command_type() == "A_COMMAND":
+            sym = parser.symbol()
+            if sym.isdigit():
+                code = Code.get_binary_address(int(sym))
+            elif symbols.contains(sym):
+                code = Code.get_binary_address(symbols.get_address(sym))
+            else:
+                address = parser.address()
+                symbols.add_entry(sym, address)
+                code = Code.get_binary_address(address)
+
+        elif (parser.command_type() == "C_COMMAND"):
+            code = Code.get_c_instruction(parser)
+
+        if code != "":
+            code += "\n"
+            output_file.write(code)
+        s+=1
+        parser.advance()
 
 def assemble_file(
         input_file: typing.TextIO, output_file: typing.TextIO) -> None:
@@ -20,43 +60,10 @@ def assemble_file(
         input_file (typing.TextIO): the file to assemble.
         output_file (typing.TextIO): writes all output to this file.
     """
-    # Your code goes here!
-    #
-    # You should use the two-pass implementation suggested in the book:
-    #
-    # *Initialization*
-    # Initialize the symbol table with all the predefined symbols and their
-    # pre-allocated RAM addresses, according to section 6.2.3 of the book.
-    #
-    # *First Pass*
-    # Go through the entire assembly program, line by line, and build the symbol
-    # table without generating any code. As you march through the program lines,
-    # keep a running number recording the ROM address into which the current
-    # command will be eventually loaded.
-    # This number starts at 0 and is incremented by 1 whenever a C-instruction
-    # or an A-instruction is encountered, but does not change when a label
-    # pseudo-command or a comment is encountered. Each time a pseudo-command
-    # (Xxx) is encountered, add a new entry to the symbol table, associating
-    # Xxx with the ROM address that will eventually store the next command in
-    # the program.
-    # This pass results in entering all the program’s labels along with their
-    # ROM addresses into the symbol table.
-    # The program’s variables are handled in the second pass.
-    #
-    # *Second Pass*
-    # Now go again through the entire program, and parse each line.
-    # Each time a symbolic A-instruction is encountered, namely, @Xxx where Xxx
-    # is a symbol and not a number, look up Xxx in the symbol table.
-    # If the symbol is found in the table, replace it with its numeric meaning
-    # and complete the command’s translation.
-    # If the symbol is not found in the table, then it must represent a new
-    # variable. To handle it, add the pair (Xxx,n) to the symbol table, where n
-    # is the next available RAM address, and complete the command’s translation.
-    # The allocated RAM addresses are consecutive numbers, starting at address
-    # 16 (just after the addresses allocated to the predefined symbols).
-    # After the command is translated, write the translation to the output file.
-    pass
-
+    symbols = SymbolTable()             # Symbols Table Initialization
+    parser = Parser(input_file)         # Parser Object
+    read_loops(parser, symbols)         # First reads the loops
+    write_code(parser, symbols, output_file)    # Write the binary code
 
 if "__main__" == __name__:
     # Parses the input path and calls assemble_file on each input file

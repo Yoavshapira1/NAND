@@ -20,10 +20,21 @@ class Parser:
         Args:
             input_file (typing.TextIO): input file.
         """
-        # Your code goes here!
-        # A good place to start is:
-        # input_lines = input_file.read().splitlines()
-        pass
+        self.__lines = []      # List of all lines and their commands
+        self.__symbol_address = 15     # First available address for a symbol
+        self.__curLine = 0     # Initialize the line reader 'buffer'
+        self.initialize_lines(input_file)
+
+
+    def initialize_lines(self,input_file: typing.TextIO) -> None:
+        """
+        Initialize the {line : commands} dictionary
+        """
+        input_lines = input_file.read().splitlines()
+        for line in input_lines:
+            l = (line.strip()).split("//")[0]
+            if not l == "":
+                self.__lines.append("".join(l.split()))
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
@@ -31,15 +42,32 @@ class Parser:
         Returns:
             bool: True if there are more commands, False otherwise.
         """
-        # Your code goes here!
-        pass
+        return len(self.__lines) > self.__curLine
 
     def advance(self) -> None:
         """Reads the next command from the input and makes it the current command.
         Should be called only if has_more_commands() is true.
         """
-        # Your code goes here!
-        pass
+        self.__curLine += 1
+
+    def reset(self) -> None:
+        """
+        Reset the line reader and return None
+        """
+        self.__curLine = 0
+
+    def getLine(self) -> int:
+        """
+        Return the current line of the reader
+        """
+        return self.__curLine
+
+    def deleteLine(self) -> None:
+        """
+        Delete the current line of the reader from the parser.
+        Should be called only when commandType() == "L_COMMAND"
+        """
+        self.__lines.pop(self.__curLine)
 
     def command_type(self) -> str:
         """
@@ -49,8 +77,15 @@ class Parser:
             "C_COMMAND" for dest=comp;jump
             "L_COMMAND" (actually, pseudo-command) for (Xxx) where Xxx is a symbol
         """
-        # Your code goes here!
-        pass
+        current = self.__lines[self.__curLine]
+        if current.startswith("@"):
+            return "A_COMMAND"
+        elif current.startswith("("):
+            return "L_COMMAND"
+        elif current == "":
+            return ""
+        else:
+            return "C_COMMAND"
 
     def symbol(self) -> str:
         """
@@ -59,8 +94,23 @@ class Parser:
             (Xxx). Should be called only when command_type() is "A_COMMAND" or 
             "L_COMMAND".
         """
-        # Your code goes here!
-        pass
+        if self.command_type() == "A_COMMAND":
+            return self.__lines[self.__curLine].replace("@", "")
+        if self.command_type() == "L_COMMAND":
+            return self.__lines[self.__curLine].replace("(", "").replace(")", "")
+
+    def address(self) -> int:
+        """
+        Return an address which a symbol corresponds to.
+        Should only be called when commandType() is "A_COMMAND" / "L_COMMAND".
+        """
+        if self.command_type() == "L_COMMAND":
+            return self.__curLine
+
+        if self.command_type() == "A_COMMAND":
+            self.__symbol_address += 1
+            return self.__symbol_address
+
 
     def dest(self) -> str:
         """
@@ -68,8 +118,8 @@ class Parser:
             str: the dest mnemonic in the current C-command. Should be called 
             only when commandType() is "C_COMMAND".
         """
-        # Your code goes here!
-        pass
+        dest_split = self.__lines[self.__curLine].split("=")
+        return dest_split[0] if len(dest_split) == 2 else ""
 
     def comp(self) -> str:
         """
@@ -77,8 +127,10 @@ class Parser:
             str: the comp mnemonic in the current C-command. Should be called 
             only when commandType() is "C_COMMAND".
         """
-        # Your code goes here!
-        pass
+        if self.dest() is not "":
+            return self.__lines[self.__curLine].split("=")[1]
+        else:
+            return self.__lines[self.__curLine].split(";")[0]
 
     def jump(self) -> str:
         """
@@ -86,5 +138,8 @@ class Parser:
             str: the jump mnemonic in the current C-command. Should be called 
             only when commandType() is "C_COMMAND".
         """
-        # Your code goes here!
-        pass
+        jmp_split = self.__lines[self.__curLine].split(";")
+        if len(jmp_split) == 2:
+            return jmp_split[1]
+        else:
+            return ""
