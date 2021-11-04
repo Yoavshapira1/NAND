@@ -21,7 +21,6 @@ class Parser:
             input_file (typing.TextIO): input file.
         """
         self.__lines = []      # List of all lines and their commands
-        self.__symbol_address = 15     # First available address for a symbol
         self.__curLine = 0     # Initialize the line reader 'buffer'
         self.initialize_lines(input_file)
 
@@ -34,7 +33,7 @@ class Parser:
         for line in input_lines:
             l = (line.strip()).split("//")[0]
             if not l == "":
-                self.__lines.append("".join(l.split()))
+                self.__lines.append(l.replace(" ",""))
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
@@ -43,6 +42,13 @@ class Parser:
             bool: True if there are more commands, False otherwise.
         """
         return len(self.__lines) > self.__curLine
+
+    def delete(self) -> None:
+        """
+        Delete the current line from the parser lines
+        Should only be called if commandType() is "L_COMMAND"
+        """
+        self.__lines.remove(self.__lines[self.__curLine])
 
     def advance(self) -> None:
         """Reads the next command from the input and makes it the current command.
@@ -55,19 +61,6 @@ class Parser:
         Reset the line reader and return None
         """
         self.__curLine = 0
-
-    def getLine(self) -> int:
-        """
-        Return the current line of the reader
-        """
-        return self.__curLine
-
-    def deleteLine(self) -> None:
-        """
-        Delete the current line of the reader from the parser.
-        Should be called only when commandType() == "L_COMMAND"
-        """
-        self.__lines.pop(self.__curLine)
 
     def command_type(self) -> str:
         """
@@ -98,19 +91,6 @@ class Parser:
             return self.__lines[self.__curLine].replace("@", "")
         if self.command_type() == "L_COMMAND":
             return self.__lines[self.__curLine].replace("(", "").replace(")", "")
-
-    def address(self) -> int:
-        """
-        Return an address which a symbol corresponds to.
-        Should only be called when commandType() is "A_COMMAND" / "L_COMMAND".
-        """
-        if self.command_type() == "L_COMMAND":
-            return self.__curLine
-
-        if self.command_type() == "A_COMMAND":
-            self.__symbol_address += 1
-            return self.__symbol_address
-
 
     def dest(self) -> str:
         """

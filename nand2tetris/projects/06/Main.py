@@ -16,11 +16,14 @@ def read_loops(parser : Parser, symbols : SymbolTable) -> None:
     Read the Loops symbols in a parser object and write them to corresponds
     SymbolTable object
     """
+    line = 0
     while parser.has_more_commands():   # First read LOOP symbols
         if parser.command_type() == "L_COMMAND":
-            symbols.add_entry(parser.symbol(), parser.address())
-            parser.deleteLine()
-        parser.advance()
+            symbols.add_entry(parser.symbol(), line)
+            parser.delete()
+        else:
+            line += 1
+            parser.advance()
     parser.reset()
 
 def write_code(parser : Parser, symbols : SymbolTable,
@@ -29,27 +32,24 @@ def write_code(parser : Parser, symbols : SymbolTable,
     Write the code for a given parser and a corresponds symbols table, to the
     gievn path of output file
     """
-    s=0
+    n = 16
     while parser.has_more_commands():   # Than read commands
-        code = ""
         if parser.command_type() == "A_COMMAND":
             sym = parser.symbol()
-            if sym.isdigit():
-                code = Code.get_binary_address(int(sym))
-            elif symbols.contains(sym):
-                code = Code.get_binary_address(symbols.get_address(sym))
-            else:
-                address = parser.address()
-                symbols.add_entry(sym, address)
-                code = Code.get_binary_address(address)
+            if not sym.isdigit():     # instruction doesnt contain a symbol
+                if symbols.contains(sym):    # check if already handled
+                    code = "0" + "{0:015b}".format(symbols.get_address(sym))
+                else:
+                    symbols.add_entry(sym, n)
+                    code = "0" + "{0:015b}".format(n)
+                    n += 1
+            else:   # if it is a number, just write it into a binary
+                code = "0" + "{0:015b}".format(int(sym))
+            output_file.write(code+"\n")
 
         elif (parser.command_type() == "C_COMMAND"):
             code = Code.get_c_instruction(parser)
-
-        if code != "":
-            code += "\n"
-            output_file.write(code)
-        s+=1
+            output_file.write(code+"\n")
         parser.advance()
 
 def assemble_file(

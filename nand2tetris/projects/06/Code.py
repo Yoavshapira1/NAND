@@ -32,7 +32,13 @@ COMP_DICT = {
     "D&A" : "0000000",
     "D&M" : "1000000",
     "D|A" : "0010101",
-    "D|M" : "1010101"
+    "D|M" : "1010101",
+    "D>>" : "0010000",
+    "D<<" : "0110000",
+    "A>>" : "0000000",
+    "A<<" : "0100000",
+    "M>>" : "1000000",
+    "M<<" : "1100000"
 }
 
 JMP_DICT = {
@@ -67,20 +73,10 @@ class Code:
         according to a given symbols table.
         Should be called only if parser.commandType() == "C_COMMAND"
         """
-        code = "111"
-        code += Code.comp(parser.comp())
-        code += Code.dest(parser.dest())
-        code += Code.jump(parser.jump())
-        return code
-
-    @staticmethod
-    def get_binary_address(address : int) -> str:
-        """
-        Return a string holds for the binary representation of a given parser
-        according to a given symbols table.
-        Should be called iff parser.commandType() == "A_COMMAND"
-        """
-        return "0" + "{0:015b}".format(address)
+        c, isShift = Code.comp(parser.comp())
+        d = Code.dest(parser.dest())
+        j = Code.jump(parser.jump())
+        return "101" + c + d + j if isShift else "111" + c + d + j
 
     @staticmethod
     def dest(mnemonic: str) -> str:
@@ -95,7 +91,7 @@ class Code:
 
 
     @staticmethod
-    def comp(mnemonic: str) -> str:
+    def comp(mnemonic: str):
         """
         Args:
             mnemonic (str): a comp mnemonic string.
@@ -103,7 +99,9 @@ class Code:
         Returns:
             str: 7-bit long binary code of the given mnemonic.
         """
-        return COMP_DICT.get(mnemonic)
+        code = COMP_DICT.get(mnemonic)
+        isShift = mnemonic.endswith(">>") or mnemonic.endswith("<<")
+        return code, isShift
 
 
     @staticmethod
