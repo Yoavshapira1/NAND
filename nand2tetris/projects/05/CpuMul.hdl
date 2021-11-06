@@ -33,12 +33,6 @@ CHIP CpuMul {
         Or (a=instruction[15], b=false, out=cType);
         Not (in=cType, out=aType);
         Or (a=instruction[12], b=false, out=inMload);
-        Or (a=instruction[11], b=false, out=zx);
-        Or (a=instruction[10], b=false, out=nx);
-        Or (a=instruction[9], b=false, out=zy);
-        Or (a=instruction[8], b=false, out=ny);
-        Or (a=instruction[7], b=false, out=f);
-        Or (a=instruction[6], b=false, out=no);
         Or (a=instruction[5], b=false, out=regAload);
         Or (a=instruction[4], b=false, out=regDload);
         Or (a=instruction[3], b=false, out=regMload);
