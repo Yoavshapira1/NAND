@@ -9,30 +9,32 @@
 // This program only needs to handle arguments that satisfy
 // R0 >= 0, R1 >= 0, and R0*R1 < 32768.
 
-// Put your code here.
-
-@R2
-M=0
-
 @i
+M=0
+@sum
 M=0
 
 (LOOP)
-    @R1
-    D=M
     @i
+    D=M
+    @R1
     D=D-M
-    @END
-    D;JEQ
-
+    @STOP
+    D;JGE
     @R0
     D=M
-    @R2
-    M=M+D
+    @sum
+    M=D+M
     @i
     M=M+1
     @LOOP
     0;JMP
+
+(STOP)
+    @sum
+    D=M
+    @R2
+    M=D
 
 (END)
     @END
