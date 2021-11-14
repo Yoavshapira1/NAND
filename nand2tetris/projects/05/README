@@ -1,7 +1,7 @@
-bartsimp, lisasimp
+yoavshapira1, nitaiseri
 ===============================================================================
-Bart Simpson, ID 011111111, bart@mail.huji.ac.il
-Lisa Simpson, ID 022222222, lisa@mail.huji.ac.il
+Yoav Shapira, ID 312492838, yoav.shapira@mail.huji.ac.il
+Nitai Seri, ID 311525505, nitaiseri@mail.huji.ac.il
 ===============================================================================
 
                            Project 5 - Computer Architecture
@@ -11,11 +11,11 @@ Lisa Simpson, ID 022222222, lisa@mail.huji.ac.il
 Submitted Files
 ---------------
 README - This file.
-ExtendAlu.hdl - 
-CpuMul.hdl -
-CPU.hdl - 
-Memory.hdl - 
-Computer.hdl - 
+ExtendAlu.hdl - Implemented
+CpuMul.hdl -Implemented
+CPU.hdl - Implemented
+Memory.hdl - Implemented
+Computer.hdl - Implemented
 Include other files required by your project, if there are any.
 
 Remarks

@@ -11,18 +11,38 @@ from Parser import Parser
 from CodeWriter import CodeWriter
 
 
-def translate_file(
-        input_file: typing.TextIO, output_file: typing.TextIO) -> None:
+def run_through_vm_code(parser, code_write):
+    while parser.has_more_commands():
+        command_type = parser.command_type()
+        if not command_type:
+            parser.advance()
+            continue
+
+        code_write.write_comment(parser.input_lines[parser.current_line_index])
+        if command_type == "C_ARITHMETIC":
+            code_write.write_arithmetic(parser.arg1())
+        elif command_type == "C_PUSH" or command_type == "C_POP":
+            code_write.write_push_pop(command_type, parser.arg1(), parser.arg2())
+        parser.advance()
+    pass
+
+
+def translate_file(input_file: typing.TextIO, output_file: typing.TextIO) -> None:
     """Translates a single file.
 
     Args:
         input_file (typing.TextIO): the file to translate.
         output_file (typing.TextIO): writes all output to this file.
     """
-    # Your code goes here!
+
+    input_filename, input_extension = os.path.splitext(os.path.basename(input_file.name))
+    parser = Parser(input_file)         # Parser Object
+    code_writer = CodeWriter(output_file)    # Write the hack code
+    code_writer.set_file_name(input_filename + ".asm")
+    run_through_vm_code(parser, code_writer)
+
+
     # Note: you can get the input file's name using:
-    # input_filename, input_extension = os.path.splitext(os.path.basename(input_file.name))
-    pass
 
 
 if "__main__" == __name__:

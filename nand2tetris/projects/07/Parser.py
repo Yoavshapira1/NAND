@@ -6,6 +6,9 @@ Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
 
+ARITHMETIC_LOGIC_COMMAND = ("add", "sub", "neg", "eq", "gt", "lt", "and", "or", "not")
+PUSH = "push"
+POP = "pop"
 
 class Parser:
     """
@@ -21,10 +24,10 @@ class Parser:
         Args:
             input_file (typing.TextIO): input file.
         """
-        # Your code goes here!
-        # A good place to start is:
-        # input_lines = input_file.read().splitlines()
-        pass
+        self.input_lines = input_file.read().splitlines()
+        self.current_line_index = 0
+        self.num_of_lines = len(self.input_lines)
+        self.current_command = self.input_lines[self.current_line_index]
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
@@ -32,16 +35,15 @@ class Parser:
         Returns:
             bool: True if there are more commands, False otherwise.
         """
-        # Your code goes here!
-        pass
+        return self.current_line_index < self.num_of_lines
 
     def advance(self) -> None:
         """Reads the next command from the input and makes it the current 
         command. Should be called only if has_more_commands() is true. Initially
         there is no current command.
         """
-        # Your code goes here!
-        pass
+        self.current_line_index += 1
+        self.current_command = self.input_lines[self.current_line_index] if self.has_more_commands() else None
 
     def command_type(self) -> str:
         """
@@ -52,8 +54,15 @@ class Parser:
             "C_PUSH", "C_POP", "C_LABEL", "C_GOTO", "C_IF", "C_FUNCTION",
             "C_RETURN", "C_CALL".
         """
-        # Your code goes here!
-        pass
+        if self.current_command.startswith("//") or not self.current_command.strip():
+            return ""
+        elif self.current_command.startswith(ARITHMETIC_LOGIC_COMMAND):
+            return "C_ARITHMETIC"
+        elif self.current_command.startswith(PUSH):
+            return "C_PUSH"
+        elif self.current_command.startswith(POP):
+            return  "C_POP"
+        return ""
 
     def arg1(self) -> str:
         """
@@ -62,8 +71,11 @@ class Parser:
             "C_ARITHMETIC", the command itself (add, sub, etc.) is returned. 
             Should not be called if the current command is "C_RETURN".
         """
-        # Your code goes here!
-        pass
+        splited_command = self.current_command.split()
+        if self.command_type() == "C_ARITHMETIC":
+            return splited_command[0]
+        else:
+            return splited_command[1]
 
     def arg2(self) -> int:
         """
@@ -72,5 +84,5 @@ class Parser:
             called only if the current command is "C_PUSH", "C_POP", 
             "C_FUNCTION" or "C_CALL".
         """
-        # Your code goes here!
-        pass
+        splited_command = self.current_command.split()
+        return int(splited_command[2])
