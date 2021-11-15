@@ -26,7 +26,9 @@ ARITHMETIC = {"add": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D+M\n",
                     "   0;JMP\n(END{index})\n",
               "and": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D&M\n",
               "or": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D|M\n",
-              "not": "@SP\nA=M\nA=A-1\nM=!M\n"}
+              "not": "@SP\nA=M\nA=A-1\nM=!M\n",
+              "shiftleft": "@SP\nA=M\nA=A-1\nM=M<<\n",
+              "shiftright": "@SP\nA=M\nA=A-1\nM=M>>\n"}
 PUSH = {"constant": "@{index}\nD=A\n@SP\nAM=M+1\nA=A-1\nM=D\n"}
 
 
