@@ -7,17 +7,20 @@ Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 
 import typing
 
-### NOTICE: R15 is used for temporarily keeping the address of the desired
+### NOTICE: R15 is used for temporarily keeping the desired
 ### value to be pushed to stack
 KEEP_ADDR = "@R15\nM=D\n"
 GET_ADDR = "@{index}\nD=A\n@{segment}\nD=M+D\n"
+GET_POINTER_OR_TEMP_ADDR = "@{index}\nD=A\n@{segment}\nD=A+D\n"
 SAVE_ADDR = GET_ADDR + KEEP_ADDR
+SAVE_POINTER_OR_TEMP_ADDR = GET_POINTER_OR_TEMP_ADDR + KEEP_ADDR
 DATA_TO_STACK = "@SP\nAM=M+1\nA=A-1\nM=D\n"
 DATA_TO_ADDR = "@R15\nA=M\nM=D\n"
 STACK_TO_DATA = "@SP\nAM=M-1\nD=M\n"
 NEW_STATIC = "@{static}\nM=D\n"
 STATIC_TO_DATA = "@{static}\nD=M\n"
 SEG_TO_DATA = "@{index}\nD=A\n@{segment}\nA=M+D\nD=M\n"
+POINTER_OR_TEMP_TO_DATA = "@{index}\nD=A\n@{segment}\nA=A+D\nD=M\n"
 CONST_TO_DATA = "@{index}\nD=A\n"
 
 END = "(END)\n@END\n0;JMP"
@@ -60,8 +63,8 @@ PUSH = {"constant": CONST_TO_DATA + DATA_TO_STACK,
         "argument": SEG_TO_DATA + DATA_TO_STACK,
         "this": SEG_TO_DATA + DATA_TO_STACK,
         "that": SEG_TO_DATA + DATA_TO_STACK,
-        "temp": SEG_TO_DATA + DATA_TO_STACK,
-        "pointer": SEG_TO_DATA + DATA_TO_STACK,
+        "temp": POINTER_OR_TEMP_TO_DATA + DATA_TO_STACK,
+        "pointer": POINTER_OR_TEMP_TO_DATA + DATA_TO_STACK,
         "static": STATIC_TO_DATA + DATA_TO_STACK
         }
 
@@ -70,8 +73,8 @@ POP = {"constant": CONST_TO_DATA + STACK_TO_DATA + DATA_TO_ADDR,
        "argument": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
        "this": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
        "that": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
-       "temp": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
-       "pointer": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
+       "temp": SAVE_POINTER_OR_TEMP_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
+       "pointer": SAVE_POINTER_OR_TEMP_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
        "static": STACK_TO_DATA + NEW_STATIC
        }
 
@@ -98,7 +101,6 @@ class CodeWriter:
             filename (str): The name of the VM file.
         """
         self.filename = filename
-        print("starting translation " + filename)
 
     def write_arithmetic(self, command: str) -> None:
         """Writes the assembly code that is the translation of the given 

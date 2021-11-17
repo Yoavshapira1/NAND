@@ -33,13 +33,9 @@ def translate_file(input_file: typing.TextIO, output_file: typing.TextIO) -> Non
         input_file (typing.TextIO): the file to translate.
         output_file (typing.TextIO): writes all output to this file.
     """
-    print("here1")
     input_filename, input_extension = os.path.splitext(os.path.basename(input_file.name))
-    print("here2")
     parser = Parser(input_file)         # Parser Object
-    print("here3")
     code_writer = CodeWriter(output_file)    # Write the hack code
-    print("here3")
     code_writer.set_file_name(input_filename)
     run_through_vm_code(parser, code_writer)
     code_writer.close()
