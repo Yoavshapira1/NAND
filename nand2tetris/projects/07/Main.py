@@ -38,12 +38,9 @@ def translate_file(input_file: typing.TextIO, output_file: typing.TextIO) -> Non
     input_filename, input_extension = os.path.splitext(os.path.basename(input_file.name))
     parser = Parser(input_file)         # Parser Object
     code_writer = CodeWriter(output_file)    # Write the hack code
-    code_writer.set_file_name(input_filename + ".asm")
+    code_writer.set_file_name(input_filename)
     run_through_vm_code(parser, code_writer)
-
-
-    # Note: you can get the input file's name using:
-
+    code_writer.close()
 
 if "__main__" == __name__:
     # Parses the input path and calls translate_file on each input file

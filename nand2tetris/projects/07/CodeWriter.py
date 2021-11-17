@@ -4,7 +4,33 @@ https://www.nand2tetris.org (Shimon Schocken and Noam Nisan, 2017)
 and as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0 
 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
+
+#TODO: POINTER DOESNT DITUNGUISH BETWEEN 0/1
 import typing
+
+### NOTICE: R15 is used for temporarily keeping the address
+### NOTICE: R5 is used to be base of the temp segment
+KEEP_ADDR = "@R15\nM=D\n"
+GET_ADDR = "@{index}\nD=A\n@{segment}\nD=M+D\n"
+SAVE_ADDR = GET_ADDR + KEEP_ADDR
+DATA_TO_STACK = "@SP\nAM=M+1\nA=A-1\nM=D\n"
+DATA_TO_ADDR = "@R15\nA=M\nM=D\n"
+STACK_TO_DATA = "@SP\nAM=M-1\nD=M\n"
+NEW_STATIC = "@{static}\nM=D\n"
+STATIC_TO_DATA = "@{static}\nD=M\n"
+SEG_TO_DATA = "@{index}\nD=A\n@{segment}\nA=M+D\nD=M\n"
+CONST_TO_DATA = "@{index}\nD=A\n"
+
+END = "(END)\n@END\n0;JMP"
+
+SEG = {"constant" : "",
+        "local": "LCL",
+         "argument": "ARG",
+         "this": "THIS",
+         "that": "THAT",
+         "temp": "R5",
+         "static": "",
+         "pointer": "THIS"}
 
 ARITHMETIC = {"add": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D+M\n",
               "sub": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D-M\n",
@@ -24,8 +50,26 @@ ARITHMETIC = {"add": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D+M\n",
               "and": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D&M\n",
               "or": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D|M\n",
               "not": "@SP\nA=M\nA=A-1\nM=!M\n"}
-PUSH = {"constant": "@{index}\nD=A\n@SP\nAM=M+1\nA=A-1\nM=D\n"}
 
+PUSH = {"constant": CONST_TO_DATA + DATA_TO_STACK,
+        "local": SEG_TO_DATA + DATA_TO_STACK,
+        "argument": SEG_TO_DATA + DATA_TO_STACK,
+        "this": SEG_TO_DATA + DATA_TO_STACK,
+        "that": SEG_TO_DATA + DATA_TO_STACK,
+        "temp": SEG_TO_DATA + DATA_TO_STACK,
+        "pointer": SEG_TO_DATA + DATA_TO_STACK,
+        "static": STATIC_TO_DATA + DATA_TO_STACK
+        }
+
+POP = {"constant": CONST_TO_DATA + STACK_TO_DATA + DATA_TO_ADDR,
+       "local": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
+       "argument": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
+       "this": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
+       "that": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
+       "temp": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
+       "pointer": SAVE_ADDR + STACK_TO_DATA + DATA_TO_ADDR,
+       "static": STACK_TO_DATA + NEW_STATIC
+       }
 
 
 
@@ -39,6 +83,7 @@ class CodeWriter:
             output_stream (typing.TextIO): output stream.
         """
         self.output_stream = output_stream
+        self.filename = ""
         self.general_continue_index = 0
 
     def set_file_name(self, filename: str) -> None:
@@ -48,6 +93,7 @@ class CodeWriter:
         Args:
             filename (str): The name of the VM file.
         """
+        self.filename = filename
         print("starting translation " + filename)
 
     def write_arithmetic(self, command: str) -> None:
@@ -71,7 +117,13 @@ class CodeWriter:
             index (int): the index in the memory segment.
         """
         if command == "C_PUSH":
-            self.output_stream.write(PUSH[segment].format(index=str(index)))
+            self.output_stream.write(PUSH[segment].format(
+                index=str(index), segment=SEG[segment],
+                static=self.filename+".{}".format(index)))
+        if command == "C_POP":
+            self.output_stream.write(POP[segment].format(
+                index=str(index), segment=SEG[segment],
+                static=self.filename+".{}".format(index)))
 
     def write_comment(self, comment: str) -> None:
         """
@@ -83,5 +135,5 @@ class CodeWriter:
 
     def close(self) -> None:
         """Closes the output file."""
-        # Your code goes here!
-        pass
+        self.output_stream.write(END)
+        self.output_stream.close()
