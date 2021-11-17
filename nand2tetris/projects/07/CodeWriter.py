@@ -33,23 +33,29 @@ SEG = {"constant" : "",
          "pointer": "THIS"}
 
 ARITHMETIC = {"add": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D+M\n",
-              "sub": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D-M\n",
+              "sub": "@SP\nAM=M-1\nD=M\nA=A-1\nM=M-D\n",
               "neg": "@SP\nA=M\nA=A-1\nM=-M\n",
-              "eq": "@SP\nAM=M-1\nD=M\n@R13\nM=D\nA=A-1\nD=M\nM=0\n@R14\nM=D\n@X_neg{index}\nR14;GLT\n@CONTINUE{index}\n"
-                    "  R13;JLT\n   @R14\n  D=M\n   @R13\n  M=M-D\n   "
-                    "@PRE_CON{index}\n   0;JMP\n"
-                    "(X_neg{index})\n   @CONTINUE{index}\n  R13;JGT\n   @R14\n  D=M\n   @R13\n  M=M-D\n   "
-                    "@PRE_CON{index}\n   0;JMP\n"
-                    ""
-                    "D=D-M\nM=0\n@TRUE{index}\n "
-                    " D;JEQ\n(TRUE{index})\n  @SP\n   A=M-1\n   M=-1\n  @CONTINUE{index}\n  0;JMP\n(CONTINUE{index})\n",
-              "gt": "@SP\nAM=M-1\nD=M\nA=A-1\nD=D-M\nM=0\n@TRUE{index}\n "
-                    " D;JLT\n(TRUE{index})\n  @SP\n   A=M-1\n   M=-1\n  @CONTINUE{index}\n  0;JMP\n(CONTINUE{index})\n",
-              "lt": "@SP\nAM=M-1\nD=M\nA=A-1\nD=D-M\nM=0\n@TRUE{index}\n "
-                    " D;JGT\n(TRUE{index})\n  @SP\n   A=M-1\n   M=-1\n  @CONTINUE{index}\n  0;JMP\n(CONTINUE{index})\n",
+              "eq": "@SP\nAM=M-1\nD=M\n@R13\nM=D\n@SP\nA=M-1\nD=M\nM=0\n@R14\nM=D\n@R14\nD=M\n@X_POS{index}\nD;JGT\n"
+                    "@R13\nD=M\n@END{index}\nD;JGT\n@CHECK{index}\n0;JMP\n(X_POS{index})\n   @R13\n  D=M\n   @END{index}"
+                    "\n   D;JLT\n(CHECK{index})\n   @R14\n   D=M\n   @R13\n    M=M-D\n   @R13\n    D=M\n   @TRUE{index}"
+                    "\n   D;JEQ\n   @END{index}\n    0;JMP\n(TRUE{index})\n    @SP\n    A=M-1\n    M=-1\n   @END{index}\n"
+                    "   0;JMP\n(END{index})\n",
+              "gt": "@SP\nAM=M-1\nD=M\n@R13\nM=D\n@SP\nA=M-1\nD=M\nM=0\n@R14\nM=D\n@R14\nD=M\n@X_POS{index}\nD;JGT\n"
+                    "@R13\nD=M\n@END{index}\nD;JGT\n@CHECK{index}\n0;JMP\n(X_POS{index})\n   @R13\n  D=M\n   @TRUE{index}"
+                    "\n   D;JLT\n(CHECK{index})\n   @R14\n   D=M\n   @R13\n    M=D-M\n   @R13\n    D=M\n   @TRUE{index}"
+                    "\n   D;JGT\n   @END{index}\n    0;JMP\n(TRUE{index})\n    @SP\n    A=M-1\n    M=-1\n    @END{index}\n"
+                    "   0;JMP\n(END{index})\n",
+              "lt": "@SP\nAM=M-1\nD=M\n@R13\nM=D\n@SP\nA=M-1\nD=M\nM=0\n@R14\nM=D\n@R14\nD=M\n@X_POS{index}\nD;JGT\n"
+                    "@R13\nD=M\n@END{index}\nD;JGT\n@CHECK{index}\n0;JMP\n(X_POS{index})\n   @R13\n  D=M\n   @END{index}"
+                    "\n   D;JLT\n(CHECK{index})\n   @R14\n   D=M\n   @R13\n    M=D-M\n   @R13\n    D=M\n   @TRUE{index}"
+                    "\n   D;JLT\n   @END{index}\n    0;JMP\n(TRUE{index})\n    @SP\n    A=M-1\n    M=-1\n    @END{index}\n"
+                    "   0;JMP\n(END{index})\n",
               "and": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D&M\n",
               "or": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D|M\n",
-              "not": "@SP\nA=M\nA=A-1\nM=!M\n"}
+              "not": "@SP\nA=M\nA=A-1\nM=!M\n",
+              "shiftleft": "@SP\nA=M\nA=A-1\nM=M<<\n",
+              "shiftright": "@SP\nA=M\nA=A-1\nM=M>>\n"}
+PUSH = {"constant": "@{index}\nD=A\n@SP\nAM=M+1\nA=A-1\nM=D\n"}
 
 PUSH = {"constant": CONST_TO_DATA + DATA_TO_STACK,
         "local": SEG_TO_DATA + DATA_TO_STACK,
