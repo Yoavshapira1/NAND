@@ -5,11 +5,10 @@ and as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 
-#TODO: POINTER DOESNT DITUNGUISH BETWEEN 0/1
 import typing
 
-### NOTICE: R15 is used for temporarily keeping the address
-### NOTICE: R5 is used to be base of the temp segment
+### NOTICE: R15 is used for temporarily keeping the address of the desired
+### value to be pushed to stack
 KEEP_ADDR = "@R15\nM=D\n"
 GET_ADDR = "@{index}\nD=A\n@{segment}\nD=M+D\n"
 SAVE_ADDR = GET_ADDR + KEEP_ADDR
@@ -55,7 +54,6 @@ ARITHMETIC = {"add": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D+M\n",
               "not": "@SP\nA=M\nA=A-1\nM=!M\n",
               "shiftleft": "@SP\nA=M\nA=A-1\nM=M<<\n",
               "shiftright": "@SP\nA=M\nA=A-1\nM=M>>\n"}
-PUSH = {"constant": "@{index}\nD=A\n@SP\nAM=M+1\nA=A-1\nM=D\n"}
 
 PUSH = {"constant": CONST_TO_DATA + DATA_TO_STACK,
         "local": SEG_TO_DATA + DATA_TO_STACK,
