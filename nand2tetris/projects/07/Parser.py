@@ -6,7 +6,7 @@ Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
 
-ARITHMETIC_LOGIC_COMMAND = ("add", "sub", "neg", "eq", "gt", "lt", "and", "or", "not")
+ARITHMETIC_LOGIC_COMMAND = ("add", "sub", "neg", "eq", "gt", "lt", "and", "or", "not", "shiftleft", "shiftright")
 PUSH = "push"
 POP = "pop"
 
