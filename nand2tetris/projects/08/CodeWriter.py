@@ -11,6 +11,17 @@ import typing
 
 ### NOTICE: R15 is used for temporarily keeping the desired
 ### value to be pushed to stack
+
+SEG = {"constant": "",
+       "local": "LCL",
+       "argument": "ARG",
+       "this": "THIS",
+       "that": "THAT",
+       "temp": "R5",
+       "static": "",
+       "pointer": "THIS"}
+
+INIT_SP = "@256\nD=A\n@SP\nM=D\n"
 KEEP_ADDR = "@R15\nM=D\n"
 GET_ADDR = "@{index}\nD=A\n@{segment}\nD=M+D\n"
 GET_POINTER_OR_TEMP_ADDR = "@{index}\nD=A\n@{segment}\nD=A+D\n"
@@ -24,15 +35,16 @@ STATIC_TO_DATA = "@{static}\nD=M\n"
 SEG_TO_DATA = "@{index}\nD=A\n@{segment}\nA=M+D\nD=M\n"
 POINTER_OR_TEMP_TO_DATA = "@{index}\nD=A\n@{segment}\nA=A+D\nD=M\n"
 CONST_TO_DATA = "@{index}\nD=A\n"
+VALUE_TO_TEMP = "@{segment}\nD=M\n@R13\nM=D\n"
+RET_ADDRESS = "@R13\nD=M\n@5\nD=D-A\n@R14\nM=D\n"
+SP_RET_UPDATE = "@{segment}\nD=M\nD=D+1\n@SP\nM=D\n"
+UPDATE_SEGS = "@R13\nD=M\n@{index}\nD=D-A\nA=D\nD=M\n@{segment}\nM=D\n"
 
-SEG = {"constant" : "",
-       "local": "LCL",
-       "argument": "ARG",
-       "this": "THIS",
-       "that": "THAT",
-       "temp": "R5",
-       "static": "",
-       "pointer": "THIS"}
+UPDATE_THAT = UPDATE_SEGS.format(index=1, segment=SEG["that"])
+UPDATE_THIS = UPDATE_SEGS.format(index=2, segment=SEG["this"])
+UPDATE_ARG = UPDATE_SEGS.format(index=3, segment=SEG["argument"])
+UPDATE_LCL = UPDATE_SEGS.format(index=4, segment=SEG["local"])
+
 
 PUSH = {
     "constant": CONST_TO_DATA + DATA_TO_STACK,
@@ -61,6 +73,9 @@ POP = {
 NEW_LABEL = "({label})\n"
 GOTO = "@{label}\n0;JMP\n"
 IF_GOTO = STACK_TO_DATA + "@{label}\nD;JGT\n"
+FUNCTION = "({label})\n"
+GOTO_RET_ADD = "@R14\nA=M\n0;JMP\n"
+
 
 BRANCHING = {
             "label": NEW_LABEL,
@@ -167,6 +182,44 @@ class CodeWriter:
         :return: None
         """
         self.output_stream.write("//" + comment + "\n")
+
+    def write_init(self):
+        """
+        Writes the assembly code that effects the
+        VM initialization (also called bootstrap
+        code). This code should be placed in the
+        ROM beginning in address 0x0000.
+        """
+        self.output_stream.write(INIT_SP)
+        self.write_call("Sys.init", 0)
+
+    def write_function(self, function_mame: str, num_vals: int) -> None:
+        """Writes the assembly code that is the translation of the given
+        command, where command is of kind "C_FUNCTION"
+
+        Args:
+            function_mame (str): the name of the function.
+            num_vals (int): the number of local variables for the function.
+        """
+        self.output_stream.write(FUNCTION.format(label=function_mame))
+        for i in range(num_vals):
+            self.output_stream.write(PUSH["constant"].format(index=0))
+
+    def write_call(self, function_mame: str, num_args: int) -> None:
+        pass
+
+    def write_return(self) -> None:
+        """Writes the assembly code that is the translation of the return command.
+        """
+        self.output_stream.write(VALUE_TO_TEMP.format(segment=SEG["local"]))
+        self.output_stream.write(RET_ADDRESS)
+        self.output_stream.write(POP["argument"].format(index=0, segment=SEG["argument"]))
+        self.output_stream.write(SP_RET_UPDATE.format(segment=SEG["argument"]))
+        self.output_stream.write(UPDATE_THAT)
+        self.output_stream.write(UPDATE_THIS)
+        self.output_stream.write(UPDATE_ARG)
+        self.output_stream.write(UPDATE_LCL)
+        self.output_stream.write(GOTO_RET_ADD)
 
     def close(self) -> None:
         """Closes the output file."""

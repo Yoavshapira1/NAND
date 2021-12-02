@@ -10,6 +10,9 @@ ARITHMETIC_LOGIC_COMMAND = ("add", "sub", "neg", "eq", "gt", "lt", "and", "or", 
 BRANCHING = ("label", "if-goto", "goto")
 PUSH = "push"
 POP = "pop"
+FUNCTION = "function"
+RETURN = "return"
+CALL = "call"
 
 class Parser:
     """
@@ -62,9 +65,15 @@ class Parser:
         elif self.current_command.startswith(PUSH):
             return "C_PUSH"
         elif self.current_command.startswith(POP):
-            return  "C_POP"
+            return "C_POP"
         elif self.current_command.startswith(BRANCHING):
-            return  "C_BRANCHING"
+            return "C_BRANCHING"
+        elif self.current_command.startswith(FUNCTION):
+            return "C_FUNCTION"
+        elif self.current_command.startswith(RETURN):
+            return "C_RETURN"
+        elif self.current_command.startswith(CALL):
+            return "C_CALL"
         return ""
 
     def arg1(self) -> str:
@@ -98,3 +107,12 @@ class Parser:
         """
         splited_command = self.current_command.split()
         return splited_command[0], splited_command[1]
+
+    def func_args(self):
+        """
+        Returns:
+            str: the arguments of the current command. Should be
+            called only if the current command is "C_FUNCTION" or "C_CALL"
+        """
+        splited_command = self.current_command.split()
+        return splited_command[1], int(splited_command[2])
