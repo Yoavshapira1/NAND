@@ -62,13 +62,11 @@ NEW_LABEL = "({label})\n"
 GOTO = "@{label}\n0;JMP\n"
 IF_GOTO = STACK_TO_DATA + "@{label}\nD;JGT\n"
 
-
 BRANCHING = {
             "label": NEW_LABEL,
             "goto": GOTO,
             "if-goto": IF_GOTO
             }
-
 
 END = "(END)\n@END\n0;JMP"
 
