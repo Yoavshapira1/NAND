@@ -11,6 +11,7 @@ import typing
 from Parser import Parser
 from CodeWriter import CodeWriter
 
+FLAG_INIT = False
 
 def run_through_vm_code(parser, code_write):
     while parser.has_more_commands():
@@ -42,17 +43,15 @@ def translate_file(input_file: typing.TextIO, output_file: typing.TextIO) -> Non
         input_file (typing.TextIO): the file to translate.
         output_file (typing.TextIO): writes all output to this file.
     """
+    global FLAG_INIT
     input_filename, input_extension = os.path.splitext(os.path.basename(input_file.name))
     code_writer = CodeWriter(output_file)   # Write the hack code
-    if os.path.isdir(input_filename):
-        files_list = glob.glob("*.vm")
-    else:
-        files_list = [input_file]
-    for filename in files_list:
-        parser = Parser(filename)  # Parser Object
-        code_writer.set_file_name(input_filename)
-        run_through_vm_code(parser, code_writer)
-    code_writer.close()
+    # if not FLAG_INIT:
+    #     code_writer.write_init()
+    #     FLAG_INIT = True
+    parser = Parser(input_file)  # Parser Object
+    code_writer.set_file_name(input_filename)
+    run_through_vm_code(parser, code_writer)
 
 if "__main__" == __name__:
     # Parses the input path and calls translate_file on each input file

@@ -12,6 +12,7 @@ import typing
 ### NOTICE: R15 is used for temporarily keeping the desired
 ### value to be pushed to stack
 
+
 SEG = {"constant": "",
        "local": "LCL",
        "argument": "ARG",
@@ -20,6 +21,10 @@ SEG = {"constant": "",
        "temp": "R5",
        "static": "",
        "pointer": "THIS"}
+
+# SEGMENTS = ["SP", "LCL", "ARG", "THIS", "THAT"]
+# BASES = [256, 1000, 2000, 3000, 4000]
+# SEGMENTS_POINTERS =[0,1,2,3,4,5]
 
 INIT_SP = "@256\nD=A\n@SP\nM=D\n"
 KEEP_ADDR = "@R15\nM=D\n"
@@ -39,12 +44,16 @@ VALUE_TO_TEMP = "@{segment}\nD=M\n@R13\nM=D\n"
 RET_ADDRESS = "@R13\nD=M\n@5\nD=D-A\n@R14\nM=D\n"
 SP_RET_UPDATE = "@{segment}\nD=M\nD=D+1\n@SP\nM=D\n"
 UPDATE_SEGS = "@R13\nD=M\n@{index}\nD=D-A\nA=D\nD=M\n@{segment}\nM=D\n"
+PUSH_SEG_ADDRESS = "@{segment}\nD=M\n" + DATA_TO_STACK
+RETURN_LABEL = "@{label}\nD=A\n" + DATA_TO_STACK
+
 
 UPDATE_THAT = UPDATE_SEGS.format(index=1, segment=SEG["that"])
 UPDATE_THIS = UPDATE_SEGS.format(index=2, segment=SEG["this"])
 UPDATE_ARG = UPDATE_SEGS.format(index=3, segment=SEG["argument"])
 UPDATE_LCL = UPDATE_SEGS.format(index=4, segment=SEG["local"])
-
+REPOSITION_ARG = "@5\nD=A\n@SP\nD=M-D\n@{nArgs}\nD=D-A\n@ARG\nM=D\n"
+REPOSITION_LCL = "@SP\nD=M\n@LCL\nM=D\n"
 
 PUSH = {
     "constant": CONST_TO_DATA + DATA_TO_STACK,
@@ -85,8 +94,6 @@ BRANCHING = {
 
 END = "(END)\n@END\n0;JMP"
 
-
-
     ########################### ARITHMETIC ##############################
 
 ARITHMETIC = {"add": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D+M\n",
@@ -125,7 +132,9 @@ class CodeWriter:
         """
         self.output_stream = output_stream
         self.filename = ""
+        self.cur_function = ""
         self.general_continue_index = 0
+        self.return_counter = 0
 
     def set_file_name(self, filename: str) -> None:
         """Informs the code writer that the translation of a new VM file is 
@@ -173,7 +182,8 @@ class CodeWriter:
             command (str): "label", "goto", or "if-goto"
             label (str): the label of the loop to jump to, if needed
         """
-        self.output_stream.write(BRANCHING[command].format(label=label))
+        label_name = self.cur_function + "$" + label
+        self.output_stream.write(BRANCHING[command].format(label=label_name))
 
     def write_comment(self, comment: str) -> None:
         """
@@ -190,6 +200,7 @@ class CodeWriter:
         code). This code should be placed in the
         ROM beginning in address 0x0000.
         """
+        # for base, segment in zip(BASES, SEGMENTS):
         self.output_stream.write(INIT_SP)
         self.write_call("Sys.init", 0)
 
@@ -204,9 +215,24 @@ class CodeWriter:
         self.output_stream.write(FUNCTION.format(label=function_mame))
         for i in range(num_vals):
             self.output_stream.write(PUSH["constant"].format(index=0))
+        self.cur_function = function_mame
 
     def write_call(self, function_mame: str, num_args: int) -> None:
-        pass
+        """
+        Writes a call function code
+        """
+        returnAddress = "{function}$ret.{index}".format(function=self.cur_function, index=self.return_counter)
+        self.return_counter += 1
+        self.output_stream.write(RETURN_LABEL.format(label=returnAddress))
+        self.output_stream.write(PUSH_SEG_ADDRESS.format(segment="LCL"))
+        self.output_stream.write(PUSH_SEG_ADDRESS.format(segment="ARG"))
+        self.output_stream.write(PUSH_SEG_ADDRESS.format(segment="THIS"))
+        self.output_stream.write(PUSH_SEG_ADDRESS.format(segment="THAT"))
+        self.output_stream.write(REPOSITION_ARG.format(nArgs=str(num_args)))
+        self.output_stream.write(REPOSITION_LCL)
+        self.output_stream.write(BRANCHING["goto"].format(label=function_mame))
+        self.output_stream.write(BRANCHING["label"].format(label=returnAddress))
+
 
     def write_return(self) -> None:
         """Writes the assembly code that is the translation of the return command.
@@ -220,8 +246,3 @@ class CodeWriter:
         self.output_stream.write(UPDATE_ARG)
         self.output_stream.write(UPDATE_LCL)
         self.output_stream.write(GOTO_RET_ADD)
-
-    def close(self) -> None:
-        """Closes the output file."""
-        self.output_stream.write(END)
-        self.output_stream.close()
