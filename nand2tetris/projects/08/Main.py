@@ -46,9 +46,9 @@ def translate_file(input_file: typing.TextIO, output_file: typing.TextIO) -> Non
     global FLAG_INIT
     input_filename, input_extension = os.path.splitext(os.path.basename(input_file.name))
     code_writer = CodeWriter(output_file)   # Write the hack code
-    # if not FLAG_INIT:
-    #     code_writer.write_init()
-    #     FLAG_INIT = True
+    if not FLAG_INIT:
+        code_writer.write_init()
+        FLAG_INIT = True
     parser = Parser(input_file)  # Parser Object
     code_writer.set_file_name(input_filename)
     run_through_vm_code(parser, code_writer)
