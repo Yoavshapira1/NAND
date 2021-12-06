@@ -77,7 +77,7 @@ POP = {
 
 NEW_LABEL = "({label})\n"
 GOTO = "@{label}\n0;JMP\n"
-IF_GOTO = STACK_TO_DATA + "@{label}\nD;JGE\n"
+IF_GOTO = STACK_TO_DATA + "@{label}\nD;JNE\n"
 FUNCTION = "({label})\n"
 GOTO_RET_ADD = "@R14\nA=M\n0;JMP\n"
 
