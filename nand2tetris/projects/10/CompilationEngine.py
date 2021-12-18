@@ -5,6 +5,7 @@ and as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
+from JackTokenizer import JackTokenizer
 
 
 class CompilationEngine:
@@ -12,7 +13,7 @@ class CompilationEngine:
     output stream.
     """
 
-    def __init__(self, input_stream: typing.TextIO,
+    def __init__(self, input_stream: JackTokenizer,
                 output_stream: typing.TextIO) -> None:
         """
         Creates a new compilation engine with the given input and output. The
@@ -20,13 +21,36 @@ class CompilationEngine:
         :param input_stream: The input stream.
         :param output_stream: The output stream.
         """
-        # Your code goes here!
+        self.tokenizer = input_stream
+        self.output_stream = output_stream
+        self.cur_token = ""
         pass
+
+    def print_to_output(self):
+        type = self.tokenizer.cur_token_type
+        token = self.tokenizer.cur_token
+        self.output_stream.write(' {} </{}\n>'.format(type, token, type))
+
+    def compile(self, expectation):
+        self.tokenizer.advance()
+        token_type = self.tokenizer.token_type()
+        if token_type != expectation:
+            raise Exception()
+        self.output_stream.write('<{}>'.format(token_type))
+        self.compile()
+        self.output_stream.write('<{}>'.format(token_type))
+
+
 
     def compile_class(self) -> None:
         """Compiles a complete class."""
-        # Your code goes here!
-        pass
+        RULE = [IDENTIFIER, '{', CLASS_VAR_DEC, SUBROUTINE_DEC, '}']
+        self.output_stream.write('<class>')
+        self.output_stream.write('<keyword>{}</keyword>').format(CLASS)
+        for rule in RULE:
+
+        self.output_stream.write('</class>')
+
 
     def compile_class_var_dec(self) -> None:
         """Compiles a static declaration or a field declaration."""
@@ -69,12 +93,25 @@ class CompilationEngine:
 
     def compile_while(self) -> None:
         """Compiles a while statement."""
-        # Your code goes here!
-        pass
+        RULE = [WHILE, '(', EXPRESSION, ')', '{', STATEMENTS, '}']
+        self.output_stream.write("<whileStatement>\n")
+        for rule in RULE:
+            # advance the tokenizer
+            # get the token's type
+            # if type != rule, raise exception
+            # else: print <type>___</type\n>
+            #       compile_type
+
+            self.tokenizer.advance()
+            token_type = self.token.token_type()
+            if token_type != rule:
+                raise Exception()
+            print('<type> {} </type\n>'.format(token_type))
+            compile('shallow', )
+        self.output_stream.write("</whileStatement>\n")
 
     def compile_return(self) -> None:
         """Compiles a return statement."""
-        # Your code goes here!
         pass
 
     def compile_if(self) -> None:
