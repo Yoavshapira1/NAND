@@ -18,10 +18,10 @@ class JackTokenizer:
         Args:
             input_stream (typing.TextIO): input stream.
         """
-        # Your code goes here!
-        # A good place to start is:
-        # input_lines = input_stream.read().splitlines()
-        pass
+        self.input_lines = input_stream.read().splitlines()
+        self.index = 0
+        self.cur_token = ""
+        self.cur_token_type = None
 
     def has_more_tokens(self) -> bool:
         """Do we have more tokens in the input?
@@ -29,15 +29,20 @@ class JackTokenizer:
         Returns:
             bool: True if there are more tokens, False otherwise.
         """
-        # Your code goes here!
-        pass
+        if len(self.input_lines[self.index]) == 0 and self.index >= len(self.input_lines):
+            return False
+        else:
+            return True
 
     def advance(self) -> None:
         """Gets the next token from the input and makes it the current token. 
         This method should be called if has_more_tokens() is true. 
         Initially there is no current token.
         """
-        # Your code goes here!
+        # TODO: go through all regex and find the longest one fit the word
+        # TODO: return both name and word
+        # TODO: delete every token was found and save in current_token
+        # TODO: save type of current token
         pass
 
     def token_type(self) -> str:
@@ -46,8 +51,12 @@ class JackTokenizer:
             str: the type of the current token, can be
             "KEYWORD", "SYMBOL", "IDENTIFIER", "INT_CONST", "STRING_CONST"
         """
-        # Your code goes here!
-        pass
+        return self.cur_token_type
+
+    def get_token(self):
+        if self.cur_token_type == STRING:
+            return self.cur_token[1:-1]
+        return self.cur_token
 
     def keyword(self) -> str:
         """
@@ -58,7 +67,6 @@ class JackTokenizer:
             "BOOLEAN", "CHAR", "VOID", "VAR", "STATIC", "FIELD", "LET", "DO", 
             "IF", "ELSE", "WHILE", "RETURN", "TRUE", "FALSE", "NULL", "THIS"
         """
-        # Your code goes here!
         pass
 
     def symbol(self) -> str:
