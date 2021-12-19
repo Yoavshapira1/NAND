@@ -5,6 +5,10 @@ and as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
+import Grammer
+import re
+
+STRING = "STRING"
 
 
 class JackTokenizer:
@@ -18,10 +22,60 @@ class JackTokenizer:
         Args:
             input_stream (typing.TextIO): input stream.
         """
-        self.input_lines = input_stream.read().splitlines()
-        self.index = 0
+        self.clean_code = ""
+        self.all_strings = []
+        self.string_index = 0
         self.cur_token = ""
         self.cur_token_type = None
+        self.first_process(input_stream.read().splitlines())
+
+    def first_process(self, lines):
+        """
+        remove all comment empty lines more then one whitespace from the input file and make
+        one long string to deal with later.
+        in addition, all string replace with STRING and keep them in a different array which is data member.
+        :param lines: the lines of the file.
+        """
+        num_of_lines = len(lines)
+        lines.append("")
+        index = 0
+        cur_line = lines[index]
+        while index < num_of_lines:
+            string_i = cur_line.find("\"")
+            comment_doc_i = cur_line.find("/*")
+            comment_i = cur_line.find("//")
+            if re.match(r'\s*//', cur_line) or cur_line == "":  #deal with regular comment or empty line
+                index += 1
+                cur_line = lines[index]
+            elif string_i != -1: # deal with string
+                if (comment_doc_i != -1 and string_i < comment_doc_i) or comment_doc_i == -1:
+                    parts = cur_line.split("\"")
+                    self.clean_code += re.sub('\s+', ' ', parts[0])
+                    self.clean_code += Grammer.STRING
+                    self.all_strings.append(parts[1])
+                    cur_line = ''.join(parts[2:])
+                    continue
+            elif comment_doc_i != -1: # deal with documentation comment
+                parts = cur_line.split("/*")
+                self.clean_code += re.sub('\s+', ' ', parts[0])
+                cur_line = ''.join(parts[1:])
+                while True:
+                    temp = cur_line.split("*/")
+                    if len(temp) == 1:
+                        index += 1
+                        cur_line = lines[index]
+                    else:
+                        cur_line = ''.join(temp[1:])
+                        break
+            elif comment_i != -1: # deal with regular comment in a middle of line
+                parts = cur_line.split("//")
+                self.clean_code += re.sub('\s+', ' ', parts[0])
+                index += 1
+                cur_line = lines[index]
+            else: # regular line
+                self.clean_code += re.sub('\s+', ' ', cur_line)
+                index += 1
+                cur_line = lines[index]
 
     def has_more_tokens(self) -> bool:
         """Do we have more tokens in the input?
@@ -29,21 +83,20 @@ class JackTokenizer:
         Returns:
             bool: True if there are more tokens, False otherwise.
         """
-        if len(self.input_lines[self.index]) == 0 and self.index >= len(self.input_lines):
-            return False
-        else:
-            return True
+        return len(self.clean_code) > 0
 
     def advance(self) -> None:
         """Gets the next token from the input and makes it the current token. 
         This method should be called if has_more_tokens() is true. 
         Initially there is no current token.
         """
-        # TODO: go through all regex and find the longest one fit the word
-        # TODO: return both name and word
-        # TODO: delete every token was found and save in current_token
-        # TODO: save type of current token
-        pass
+        for token_reg in Grammer.TOKEN_TYPES_REGEX.keys():
+            token = re.match("\s*" + token_reg, self.clean_code)
+            if token:
+                self.cur_token = re.sub('\s+', '', token.group())
+                self.cur_token_type = Grammer.TOKEN_TYPES_REGEX[token_reg]
+                self.clean_code = self.clean_code[len(token.group()):]
+                break
 
     def token_type(self) -> str:
         """
@@ -54,53 +107,54 @@ class JackTokenizer:
         return self.cur_token_type
 
     def get_token(self):
-        if self.cur_token_type == STRING:
-            return self.cur_token[1:-1]
+        if self.cur_token_type == Grammer.STRING_CONSTANT:
+            self.string_index += 1
+            return self.all_strings[self.string_index - 1]
         return self.cur_token
 
-    def keyword(self) -> str:
-        """
-        Returns:
-            str: the keyword which is the current token.
-            Should be called only when token_type() is "KEYWORD".
-            Can return "CLASS", "METHOD", "FUNCTION", "CONSTRUCTOR", "INT", 
-            "BOOLEAN", "CHAR", "VOID", "VAR", "STATIC", "FIELD", "LET", "DO", 
-            "IF", "ELSE", "WHILE", "RETURN", "TRUE", "FALSE", "NULL", "THIS"
-        """
-        pass
-
-    def symbol(self) -> str:
-        """
-        Returns:
-            str: the character which is the current token.
-            Should be called only when token_type() is "SYMBOL".
-        """
-        # Your code goes here!
-        pass
-
-    def identifier(self) -> str:
-        """
-        Returns:
-            str: the identifier which is the current token.
-            Should be called only when token_type() is "IDENTIFIER".
-        """
-        # Your code goes here!
-        pass
-
-    def int_val(self) -> int:
-        """
-        Returns:
-            str: the integer value of the current token.
-            Should be called only when token_type() is "INT_CONST".
-        """
-        # Your code goes here!
-        pass
-
-    def string_val(self) -> str:
-        """
-        Returns:
-            str: the string value of the current token, without the double 
-            quotes. Should be called only when token_type() is "STRING_CONST".
-        """
-        # Your code goes here!
-        pass
+    # def keyword(self) -> str:
+    #     """
+    #     Returns:
+    #         str: the keyword which is the current token.
+    #         Should be called only when token_type() is "KEYWORD".
+    #         Can return "CLASS", "METHOD", "FUNCTION", "CONSTRUCTOR", "INT",
+    #         "BOOLEAN", "CHAR", "VOID", "VAR", "STATIC", "FIELD", "LET", "DO",
+    #         "IF", "ELSE", "WHILE", "RETURN", "TRUE", "FALSE", "NULL", "THIS"
+    #     """
+    #     pass
+    #
+    # def symbol(self) -> str:
+    #     """
+    #     Returns:
+    #         str: the character which is the current token.
+    #         Should be called only when token_type() is "SYMBOL".
+    #     """
+    #     # Your code goes here!
+    #     pass
+    #
+    # def identifier(self) -> str:
+    #     """
+    #     Returns:
+    #         str: the identifier which is the current token.
+    #         Should be called only when token_type() is "IDENTIFIER".
+    #     """
+    #     # Your code goes here!
+    #     pass
+    #
+    # def int_val(self) -> int:
+    #     """
+    #     Returns:
+    #         str: the integer value of the current token.
+    #         Should be called only when token_type() is "INT_CONST".
+    #     """
+    #     # Your code goes here!
+    #     pass
+    #
+    # def string_val(self) -> str:
+    #     """
+    #     Returns:
+    #         str: the string value of the current token, without the double
+    #         quotes. Should be called only when token_type() is "STRING_CONST".
+    #     """
+    #     # Your code goes here!
+    #     pass

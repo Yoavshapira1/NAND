@@ -1,20 +1,38 @@
 import re
 
-KEYWORDS = "(CLASS|METHOD|FUNCTION|CONSTRUCTOR|INT|" \
-           "BOOLEAN|CHAR|VOID|VAR|STATIC|FIELD|LET|DO|" \
-           "IF|ELSE|WHILE|RETURN|TRUE|FALSE|NULL|THIS)"
 
-SYMBOLS = "(\\{|\\}\\\|\\(|\\)|\\[|\\]|\\.|\\,|\\;|\\+|\\-|\\*|\\/|\\&|\\||\\<|\\>|\\=|\\~)"
+KEYWORDS = "(class|method|function|constructor|int|" \
+           "boolean|char|void|var|static|field|let|do|" \
+           "if|else|while|return|true|false|null|this)"
 
-WHITESPACE = "\\s+"
+SYMBOLS = "(\{|\}|\(|\)|\[|\]|\.|,|;|\+|\-|\*|\/|&|\||<|>|=|~)"
 
 INTEGER = "[0-9]+"
 
-STRING = "\d"
-
-TERM = INTEGER + "|" + STRING + "|" + KEYWORDS + "|"
+STRING = "STRING"
 
 IDENTIFIER = "[a-zA-Z_][\w]*"
+
+KEYWORD = "keyword"
+
+SYMBOL = "symbol"
+
+INTEGER_CONSTANT = "integerConstant"
+
+STRING_CONSTANT = "stringConstant"
+
+TOKEN_TYPES_REGEX = {KEYWORDS: KEYWORD,
+                     SYMBOLS: SYMBOL,
+                     INTEGER: INTEGER_CONSTANT,
+                     STRING: STRING_CONSTANT,
+                     IDENTIFIER: "identifier"}
+
+
+### dont know if needed yet so didnt check all below
+
+WHITESPACE = "\\s+"
+
+TERM = INTEGER_CONSTANT + "|" + STRING_CONSTANT + "|" + KEYWORDS + "|"
 
 CLASS_NAME = IDENTIFIER
 
@@ -40,15 +58,18 @@ EXPRESSION = TERM + "(" + OP + TERM + ")*"
 
 ARRAY = VAR_NAME + "[" + EXPRESSION + "]"
 
+
+
 ##PROBLEMS:
 # STRING - except new line
 # term + 5 - can be let + 5?
 
 if __name__ == '__main__':
-    txt = "x+"
-    x = re.match(EXPRESSION, txt)
+    txt = ""
+    x = re.sub(r'\([^)]*\)', '', txt)
 
     if x:
         print("YES! We have a match!")
+        print(x)
     else:
         print("No match")
