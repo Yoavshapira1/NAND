@@ -30,34 +30,26 @@ TOKEN_TYPES_REGEX = {KEYWORDS: KEYWORD,
 
 ### dont know if needed yet so didnt check all below
 
-WHITESPACE = "\\s+"
+# WHITESPACE = "\\s+"
+#
+# TERM = INTEGER_CONSTANT + "|" + STRING_CONSTANT + "|" + KEYWORDS + "|"
+#
+# CLASS_NAME = IDENTIFIER
+#
+# SUBROUTINE_NAME = IDENTIFIER
+#
+# VAR_NAME = IDENTIFIER
+#
+# OP = "(\\+|\\-|\\*|\\/|\\&|\\||\\<|\\>|\\=)"
+#
+# EXPRESSION = TERM + "(" + OP + TERM + ")*"
+#
+# ARRAY = VAR_NAME + "[" + EXPRESSION + "]"
 
-TERM = INTEGER_CONSTANT + "|" + STRING_CONSTANT + "|" + KEYWORDS + "|"
-
-CLASS_NAME = IDENTIFIER
-
-SUBROUTINE_NAME = IDENTIFIER
-
-VAR_NAME = IDENTIFIER
-
-LET_STATEMENT = "let"
-
-IF_STATEMENT = "if"
-
-WHILE_STATEMENT = "while"
-
-DO_STATEMENT = "do"
-
-RETURN_STATEMENT = "return"
-
-STATEMENT = LET_STATEMENT + "|" + IF_STATEMENT + "|" + WHILE_STATEMENT + "|" + DO_STATEMENT + "|" + RETURN_STATEMENT
-
-OP = "(\\+|\\-|\\*|\\/|\\&|\\||\\<|\\>|\\=)"
-
-EXPRESSION = TERM + "(" + OP + TERM + ")*"
-
-ARRAY = VAR_NAME + "[" + EXPRESSION + "]"
-
+STATEMENTS = ['let', 'while', 'if', 'do', 'return']
+OP = ['+', '-', '*', '/', '&', '|', '>', '<', '=']
+UNARY_OP = ['-', '~']
+CONSTANTS = [STRING_CONSTANT, INTEGER_CONSTANT, KEYWORD]
 
 
 ##PROBLEMS:

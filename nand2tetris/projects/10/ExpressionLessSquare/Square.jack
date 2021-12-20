@@ -7,9 +7,11 @@
 
 class Square {
 
-   field int x, y; 
-   field int size; 
+    //classVarDec
+   field int x, y;
+   field int size;
 
+   // subroutineDec       subroutineDec
    constructor Square new(int Ax, int Ay, int Asize) {
       let x = Ax;
       let y = Ay;
