@@ -44,10 +44,10 @@ class CompilationEngine:
 
     def compile_class(self) -> None:
         """Compiles a complete class."""
-        RULE = [IDENTIFIER, '{', CLASS_VAR_DEC, SUBROUTINE_DEC, '}']
+        # RULE = [IDENTIFIER, '{', CLASS_VAR_DEC, SUBROUTINE_DEC, '}']
         self.output_stream.write('<class>')
-        self.output_stream.write('<keyword>{}</keyword>').format(CLASS)
-        for rule in RULE:
+        # self.output_stream.write('<keyword>{}</keyword>').format(CLASS)
+        # for rule in RULE:
 
         self.output_stream.write('</class>')
 
@@ -93,8 +93,9 @@ class CompilationEngine:
 
     def compile_while(self) -> None:
         """Compiles a while statement."""
-        RULE = [WHILE, '(', EXPRESSION, ')', '{', STATEMENTS, '}']
+        # RULE = [WHILE, '(', EXPRESSION, ')', '{', STATEMENTS, '}']
         self.output_stream.write("<whileStatement>\n")
+        RULE = []
         for rule in RULE:
             # advance the tokenizer
             # get the token's type
