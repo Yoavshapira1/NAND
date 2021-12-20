@@ -510,15 +510,18 @@ class CompilationEngine:
                 # <symbol> ] </symbol>
                 self.write_token()
 
-            elif self.tokenizer.get_token() in ['(', '.']:
+            elif self.tokenizer.get_token() == '.':
+                self.compile_subroutine_call(print_identifier=False)
 
-                print_identifier = (self.tokenizer.get_token()=='.')
-
-                # <symbol> (','|'.') </symbol>
+            elif self.tokenizer.get_token() == '(':
+                # <symbol> ( </symbol>
                 self.write_token()
 
-                # // subroutineCall - recursive
-                self.compile_subroutine_call(print_identifier=print_identifier)
+                # expressionList ...
+                self.compile_expression_list()
+
+                # <symbol> ) </symbol>
+                self.write_token()
 
         # </term>
         self.output_stream.write("</term>\n")
