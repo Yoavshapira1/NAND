@@ -6,17 +6,8 @@ Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
 from JackTokenizer import JackTokenizer
+from Grammer import *
 
-TERMINALS = ["keyword", "identifier", "integerConstant", "stringConstant", "symbol"]
-CONSTANTS = ["integerConstant", "stringConstant", "keyword"]
-NON_TERMINALS = ["class", "classVarDec","subroutineDec", "parameterList",
-                 "subroutineBody", "varDec", "statements", "LetStatement",
-                 "ifStatement", "whileStatement", "doStatement", "returnStatement",
-                 "expression", "term", "expressionList"]
-
-STATEMENTS = ['let', 'while', 'if', 'do', 'return']
-OP = ['+', '-', '*', '/', '&', '|', '>', '<', '=']
-UNARY_OP = ['-', '~']
 
 # TODO: no compilexxx methods:
 #   type, className, subroutineName, variableName, statement, subroutineCall
