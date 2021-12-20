@@ -48,7 +48,7 @@ ARITHMETIC = {"add": "@SP\nAM=M-1\nD=M\nA=A-1\nM=D+M\n",
                     "\n   D;JGT\n   @END{index}\n    0;JMP\n(TRUE{index})\n    @SP\n    A=M-1\n    M=-1\n    @END{index}\n"
                     "   0;JMP\n(END{index})\n",
               "lt": "@SP\nAM=M-1\nD=M\n@R13\nM=D\n@SP\nA=M-1\nD=M\nM=0\n@R14\nM=D\n@R14\nD=M\n@X_POS{index}\nD;JGT\n"
-                    "@R13\nD=M\n@END{index}\nD;JGT\n@CHECK{index}\n0;JMP\n(X_POS{index})\n   @R13\n  D=M\n   @END{index}"
+                    "@R13\nD=M\n@TRUE{index}\nD;JGT\n@CHECK{index}\n0;JMP\n(X_POS{index})\n   @R13\n  D=M\n   @END{index}"
                     "\n   D;JLT\n(CHECK{index})\n   @R14\n   D=M\n   @R13\n    M=D-M\n   @R13\n    D=M\n   @TRUE{index}"
                     "\n   D;JLT\n   @END{index}\n    0;JMP\n(TRUE{index})\n    @SP\n    A=M-1\n    M=-1\n    @END{index}\n"
                     "   0;JMP\n(END{index})\n",
