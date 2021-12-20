@@ -32,14 +32,19 @@ class CompilationEngine:
     def write_token(self):
         """ Output for types: keyword, symbols, constant, identifier"""
 
+        if self.tokenizer.get_token() in SPECIAL_SYMBOLS:
+            token = SPECIAL_SYMBOLS[self.tokenizer.get_token()]
+        else:
+            token = self.tokenizer.get_token()
+
         # <token_Type>
-        opening = '<{}>'.format(self.tokenizer.cur_token_type)
+        opening = '<{}>'.format(self.tokenizer.token_type())
 
         # <token>
-        val = ' ' + self.tokenizer.cur_token + ' '
+        val = ' ' + token + ' '
 
         # </token_Type>
-        closing = '</{}>\n'.format(self.tokenizer.cur_token_type)
+        closing = '</{}>\n'.format(self.tokenizer.token_type())
 
         self.output_stream.write(opening + val + closing)
 
@@ -61,6 +66,7 @@ class CompilationEngine:
 
         # <class>
         self.output_stream.write("<class>\n")
+        self.tokenizer.advance()
 
         # <keyword> class </keyword>
         self.write_token()
@@ -72,10 +78,12 @@ class CompilationEngine:
         self.write_token()
 
         # // classVarDec - recursive
-        self.compile_class_var_dec()
+        while self.tokenizer.get_token() in CLASS_VAR:
+            self.compile_class_var_dec()
 
         # // subroutineDec - recursive
-        self.compile_subroutine()
+        while self.tokenizer.get_token() in SUBROUTINE:
+            self.compile_subroutine()
 
         # <symbol> } </symbol>
         self.write_token()
@@ -108,13 +116,13 @@ class CompilationEngine:
         self.write_token()
 
         # // optional varName
-        self.compile_optional_terms([','], self.write_token())
+        self.compile_optional_terms([','], self.write_token)
 
         # <symbol> ; </symbol>
         self.write_token()
 
         # </classVarDec>
-        self.output_stream.write("</classVarDec\n>")
+        self.output_stream.write("</classVarDec>\n")
 
     def compile_subroutine(self) -> None:
         """Compiles a complete method, function, or constructor:
@@ -168,9 +176,9 @@ class CompilationEngine:
         """
 
         # <parameterList>
-        self.output_stream.write("<parameterList\n>")
+        self.output_stream.write("<parameterList>\n")
 
-        if self.tokenizer.cur_token != ')':
+        if self.tokenizer.get_token() != ')':
 
             # <(keyword|identifier)> type </(keyword|identifier)>
             self.write_token()
@@ -179,10 +187,10 @@ class CompilationEngine:
             self.write_token()
 
             # // optional more parameters
-            self.compile_optional_terms([','], self.write_token(), parameters=True)
+            self.compile_optional_terms([','], self.write_token, parameters=True)
 
         # </parameterList>
-        self.output_stream.write("</parameterList\n>")
+        self.output_stream.write("</parameterList>\n")
 
     def compile_var_dec(self) -> None:
         """Compiles a var declaration:
@@ -208,7 +216,7 @@ class CompilationEngine:
         self.write_token()
 
         # // optional varNames ...
-        self.compile_optional_terms([','], self.write_token())
+        self.compile_optional_terms([','], self.write_token)
 
         # <symbol> ; </symbol>
         self.write_token()
@@ -227,16 +235,16 @@ class CompilationEngine:
         # <statements>
         self.output_stream.write("<statements>\n")
 
-        while self.tokenizer.cur_token in STATEMENTS:
-            if self.tokenizer.cur_token == 'let':
+        while self.tokenizer.get_token() in STATEMENTS:
+            if self.tokenizer.get_token() == 'let':
                 self.compile_let()
-            elif self.tokenizer.cur_token == 'do':
+            elif self.tokenizer.get_token() == 'do':
                 self.compile_do()
-            elif self.tokenizer.cur_token == 'while':
+            elif self.tokenizer.get_token() == 'while':
                 self.compile_while()
-            elif self.tokenizer.cur_token == 'if':
+            elif self.tokenizer.get_token() == 'if':
                 self.compile_if()
-            elif self.tokenizer.cur_token == 'return':
+            elif self.tokenizer.get_token() == 'return':
                 self.compile_return()
 
         # </statements>
@@ -286,7 +294,7 @@ class CompilationEngine:
         # <identifier> varName </identifier>
         self.write_token()
 
-        if self.tokenizer.cur_token == '[':
+        if self.tokenizer.get_token() == '[':
             # <symbol> [ </symbol>
             self.write_token()
 
@@ -325,7 +333,7 @@ class CompilationEngine:
         self.output_stream.write("<whileStatement>\n")
 
         # <keyword> while </keyword>
-        self.output_stream.write("<while>\n")
+        self.write_token()
 
         # <symbol> ( </symbol>
         self.write_token()
@@ -365,7 +373,7 @@ class CompilationEngine:
         self.write_token()
 
         # // expression? - recursive
-        if self.tokenizer.cur_token() != ';':
+        if self.tokenizer.get_token() != ';':
             self.compile_expression()
 
         # <symbol> ; </symbol>
@@ -414,7 +422,7 @@ class CompilationEngine:
         self.write_token()
 
         # //else?
-        if self.tokenizer.cur_token == 'else':
+        if self.tokenizer.get_token() == 'else':
             # <keyword> else </keyword>
             self.write_token()
 
@@ -439,17 +447,17 @@ class CompilationEngine:
         </expression>
         """
         # <expression>
-        self.output_stream.write("<expression\n>")
+        self.output_stream.write("<expression>\n")
 
         # // term - NOT recursive! Since if there is a recursive grammar,
         # the compile_additional_op_term does it
         self.compile_term()
 
         # // optional more op term - recursive
-        self.compile_optional_terms(OP, self.compile_term())
+        self.compile_optional_terms(OP, self.compile_term)
 
         #  </expression>
-        self.output_stream.write("</expression\n>")
+        self.output_stream.write("</expression>\n")
 
     def compile_term(self) -> None:
         """Compiles a term. 
@@ -465,11 +473,11 @@ class CompilationEngine:
         # <term>
         self.output_stream.write("<term>\n")
 
-        if self.tokenizer.cur_token_type in CONSTANTS:
+        if self.tokenizer.token_type() in CONSTANTS:
             # <(stringConstant|integerConstant|keyword> term </(stringConstant|integerConstant|keyword>
             self.write_token()
 
-        elif self.tokenizer.cur_token == '(':
+        elif self.tokenizer.get_token() == '(':
             # <symbol> ( </symbol>
             self.write_token()
 
@@ -479,7 +487,7 @@ class CompilationEngine:
             # <symbol> ) </symbol>
             self.write_token()
 
-        elif self.tokenizer.cur_token in UNARY_OP:
+        elif self.tokenizer.get_token() in UNARY_OP:
             # <symbol> unaryOp </symbol>
             self.write_token()
 
@@ -492,7 +500,7 @@ class CompilationEngine:
             # <identifier> name </identifier>
             self.write_token()
 
-            if self.tokenizer.cur_token == '[':
+            if self.tokenizer.get_token() == '[':
                 # <symbol> [ </symbol>
                 self.write_token()
 
@@ -502,12 +510,15 @@ class CompilationEngine:
                 # <symbol> ] </symbol>
                 self.write_token()
 
-            elif self.tokenizer.cur_token in ['(', '.']:
+            elif self.tokenizer.get_token() in ['(', '.']:
+
+                print_identifier = (self.tokenizer.get_token()=='.')
+
                 # <symbol> (','|'.') </symbol>
                 self.write_token()
 
                 # // subroutineCall - recursive
-                self.compile_subroutine_call(print_identifier=(self.tokenizer.cur_token=='.'))
+                self.compile_subroutine_call(print_identifier=print_identifier)
 
         # </term>
         self.output_stream.write("</term>\n")
@@ -525,11 +536,11 @@ class CompilationEngine:
         self.output_stream.write("<expressionList>\n")
 
         # // expression ...
-        if self.tokenizer.cur_token != ')':
+        if self.tokenizer.get_token() != ')':
             self.compile_expression()
 
             # // optional more expressions ...
-            self.compile_optional_terms([')'], self.compile_expression())
+            self.compile_optional_terms([','], self.compile_expression)
 
         #  </expressionList>
         self.output_stream.write("</expressionList>\n")
@@ -552,7 +563,7 @@ class CompilationEngine:
             # <identifier> mainName </identifier>
             self.write_token()
 
-        if self.tokenizer.cur_token == '(':
+        if self.tokenizer.get_token() == '(':
             pass
 
         else:
@@ -589,7 +600,8 @@ class CompilationEngine:
         self.write_token()
 
         # // varDec - recursive
-        self.compile_var_dec()
+        while self.tokenizer.get_token() == 'var':
+            self.compile_var_dec()
 
         # // statements - recursive
         self.compile_statements()
@@ -614,7 +626,7 @@ class CompilationEngine:
                         self.compile_expression >>> for case 4
         :param parameters: True iff type is 3)
         """
-        while self.tokenizer.cur_token in separators:
+        while self.tokenizer.get_token() in separators:
 
             # <symbol> (','|op) </symbol>
             self.write_token()
@@ -635,7 +647,7 @@ class CompilationEngine:
     #     # <symbol> , </symbol>
     #     # <identifier> varName </identifier>
     #     """
-    # while self.tokenizer.cur_token == ',':
+    # while self.tokenizer.get_token() == ',':
     #
     #     # <symbol> , </symbol>
     #     self.write_token()
@@ -654,7 +666,7 @@ class CompilationEngine:
     #     // term
     #     """
     #
-    #     while self.tokenizer.cur_token_type in OP:
+    #     while self.tokenizer.token_type() in OP:
     #         # <symbol> op </symbol>
     #         self.write_token()
     #
@@ -667,7 +679,7 @@ class CompilationEngine:
     #     // expression
     #     """
     #
-    #     while self.tokenizer.cur_token_type  == ',':
+    #     while self.tokenizer.token_type()  == ',':
     #         # <symbol> , </symbol>
     #         self.write_token()
     #

@@ -76,6 +76,7 @@ class JackTokenizer:
                 self.clean_code += re.sub('\s+', ' ', cur_line)
                 index += 1
                 cur_line = lines[index]
+        self.clean_code = self.clean_code.rstrip()
 
     def has_more_tokens(self) -> bool:
         """Do we have more tokens in the input?
@@ -90,6 +91,8 @@ class JackTokenizer:
         This method should be called if has_more_tokens() is true. 
         Initially there is no current token.
         """
+        if self.cur_token_type == Grammer.STRING:
+            self.string_index += 1
         for token_reg in Grammer.TOKEN_TYPES_REGEX.keys():
             token = re.match("\s*" + token_reg, self.clean_code)
             if token:
@@ -108,6 +111,5 @@ class JackTokenizer:
 
     def get_token(self):
         if self.cur_token_type == Grammer.STRING_CONSTANT:
-            self.string_index += 1
-            return self.all_strings[self.string_index - 1]
+            return self.all_strings[self.string_index]
         return self.cur_token
