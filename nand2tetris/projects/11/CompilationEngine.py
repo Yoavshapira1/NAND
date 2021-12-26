@@ -9,9 +9,6 @@ from JackTokenizer import JackTokenizer
 from Grammer import *
 
 
-# TODO: no compilexxx methods:
-#   type, className, subroutineName, variableName, statement, subroutineCall
-
 
 class CompilationEngine:
     """Gets input from a JackTokenizer and emits its parsed structure into an
