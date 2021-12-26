@@ -111,3 +111,9 @@ class JackTokenizer:
             self.string_index += 1
             return self.all_strings[self.string_index - 1]
         return self.cur_token
+
+    import numpy as np
+    means = [1, 2, 3]
+    values = np.array([])
+    for mean in means:
+        np.concatenate((values, np.random.normal(mean, 1, 100)))
