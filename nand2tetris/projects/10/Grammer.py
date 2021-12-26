@@ -5,7 +5,7 @@ KEYWORDS = "(class|method|function|constructor|int|" \
            "boolean|char|void|var|static|field|let|do|" \
            "if|else|while|return|true|false|null|this)"
 
-SYMBOLS = "(\{|\}|\(|\)|\[|\]|\.|,|;|\+|\-|\*|\/|&|\||<|>|=|~)"
+SYMBOLS = "(\{|\}|\(|\)|\[|\]|\.|,|;|\+|\-|\*|\/|&|\||<|>|=|~|\^|#)"
 
 INTEGER = "[0-9]+"
 
@@ -46,10 +46,13 @@ TOKEN_TYPES_REGEX = {KEYWORDS: KEYWORD,
 #
 # ARRAY = VAR_NAME + "[" + EXPRESSION + "]"
 
+SPECIAL_SYMBOLS = {"&" : "&amp;", "<" : "&lt;", ">" : "&gt;"}
 STATEMENTS = ['let', 'while', 'if', 'do', 'return']
 OP = ['+', '-', '*', '/', '&', '|', '>', '<', '=']
-UNARY_OP = ['-', '~']
+UNARY_OP = ['-', '~', '#', '^']
 CONSTANTS = [STRING_CONSTANT, INTEGER_CONSTANT, KEYWORD]
+SUBROUTINE = ["method", "function", "constructor"]
+CLASS_VAR = ["static", "field"]
 
 
 ##PROBLEMS:
