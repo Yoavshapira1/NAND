@@ -41,9 +41,11 @@ class JackTokenizer:
         index = 0
         cur_line = lines[index]
         while index < num_of_lines:
+            comment_i = cur_line.find("//")
+            if comment_i != -1:
+                cur_line = cur_line[:comment_i]
             string_i = cur_line.find("\"")
             comment_doc_i = cur_line.find("/*")
-            comment_i = cur_line.find("//")
             if re.match(r'\s*//', cur_line) or cur_line == "":  #deal with regular comment or empty line
                 index += 1
                 cur_line = lines[index]
@@ -94,13 +96,12 @@ class JackTokenizer:
         if self.cur_token_type == Grammer.STRING_CONSTANT:
             self.string_index += 1
         all_token = re.match("\s*" + Grammer.ALL_TOKEN_TYPES_REGEX, self.clean_code)
-        all_token = re.sub('\s+', '', all_token.group())
         for token_reg in Grammer.TOKEN_TYPES_REGEX.keys():
-            token = re.match("\s*" + "^" + token_reg + "$", all_token)
+            token = re.match("^\s*" + token_reg + "$", all_token.group())
             if token:
                 self.cur_token = re.sub('\s+', '', token.group())
                 self.cur_token_type = Grammer.TOKEN_TYPES_REGEX[token_reg]
-                self.clean_code = self.clean_code[len(token.group()):]
+                self.clean_code = self.clean_code[len(all_token.group()):]
                 break
 
     def token_type(self) -> str:
