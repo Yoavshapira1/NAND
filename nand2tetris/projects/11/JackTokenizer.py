@@ -91,7 +91,7 @@ class JackTokenizer:
         This method should be called if has_more_tokens() is true. 
         Initially there is no current token.
         """
-        if self.cur_token_type == Grammer.STRING:
+        if self.cur_token_type == Grammer.STRING_CONSTANT:
             self.string_index += 1
         for token_reg in Grammer.TOKEN_TYPES_REGEX.keys():
             token = re.match("\s*" + token_reg, self.clean_code)
