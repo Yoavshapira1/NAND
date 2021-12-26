@@ -27,7 +27,7 @@ TOKEN_TYPES_REGEX = {KEYWORDS: KEYWORD,
                      STRING: STRING_CONSTANT,
                      IDENTIFIER: "identifier"}
 
-ALL_TOKEN_TYPES_REGEX = "(" + IDENTIFIER + "|" + SYMBOLS + "|" + INTEGER + "|" + STRING + "|" + KEYWORDS + ")"
+ALL_TOKEN_TYPES_REGEX = "(" + IDENTIFIER + "|" + SYMBOLS + "|" + INTEGER + "|" + STRING + "|" + KEYWORDS + ")?"
 
 
 ### dont know if needed yet so didnt check all below
