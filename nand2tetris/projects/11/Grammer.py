@@ -29,25 +29,6 @@ TOKEN_TYPES_REGEX = {KEYWORDS: KEYWORD,
 
 ALL_TOKEN_TYPES_REGEX = "(" + IDENTIFIER + "|" + SYMBOLS + "|" + INTEGER + "|" + STRING + "|" + KEYWORDS + ")?"
 
-
-### dont know if needed yet so didnt check all below
-
-# WHITESPACE = "\\s+"
-#
-# TERM = INTEGER_CONSTANT + "|" + STRING_CONSTANT + "|" + KEYWORDS + "|"
-#
-# CLASS_NAME = IDENTIFIER
-#
-# SUBROUTINE_NAME = IDENTIFIER
-#
-# VAR_NAME = IDENTIFIER
-#
-# OP = "(\\+|\\-|\\*|\\/|\\&|\\||\\<|\\>|\\=)"
-#
-# EXPRESSION = TERM + "(" + OP + TERM + ")*"
-#
-# ARRAY = VAR_NAME + "[" + EXPRESSION + "]"
-
 SPECIAL_SYMBOLS = {"&" : "&amp;", "<" : "&lt;", ">" : "&gt;"}
 STATEMENTS = ['let', 'while', 'if', 'do', 'return']
 OP = ['+', '-', '*', '/', '&', '|', '>', '<', '=']
@@ -55,18 +36,17 @@ UNARY_OP = ['-', '~', '#', '^']
 CONSTANTS = [STRING_CONSTANT, INTEGER_CONSTANT, KEYWORD]
 SUBROUTINE = ["method", "function", "constructor"]
 CLASS_VAR = ["static", "field"]
+LOCAL = "local"
+ARG = "arguments"
+STATIC = "static"
+FIELD = "field"
+THIS = "this"
+THAT = "that"
+CONST = "constant"
+POINTER = "pointer"
 
+# USEFUL DICTIONARIES
 
-##PROBLEMS:
-# STRING - except new line
-# term + 5 - can be let + 5?
-
-if __name__ == '__main__':
-    txt = ""
-    x = re.sub(r'\([^)]*\)', '', txt)
-
-    if x:
-        print("YES! We have a match!")
-        print(x)
-    else:
-        print("No match")
+CLASS_VAR_TO_SEG = {"static": "static", "field": "this"}
+OPERATOR_TO_VM = {"+": "add", "-": "sub", "&": "and", "|": "or", ">": "gt",
+                  "<": "lt", "=": "eq", "~": "not"}

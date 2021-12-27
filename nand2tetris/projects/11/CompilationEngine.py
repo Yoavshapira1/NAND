@@ -31,39 +31,22 @@ class CompilationEngine:
         self.methodSymbolTable = SymbolTable()
         self.output_stream = output_stream
 
-    def write_token(self):
-        """ Output for types: keyword, symbols, constant, identifier"""
+    def eat_token(self):
+        """ Return the current token and advances the tokenizer"""
 
+        # keep the current token
         if self.tokenizer.get_token() in SPECIAL_SYMBOLS:
             token = SPECIAL_SYMBOLS[self.tokenizer.get_token()]
         else:
             token = self.tokenizer.get_token()
 
-        # <token_Type>
-        opening = '<{}>'.format(self.tokenizer.token_type())
-
-        # <token>
-        val = ' ' + token + ' '
-
-        # </token_Type>
-        closing = '</{}>\n'.format(self.tokenizer.token_type())
-
-        self.output_stream.write(opening + val + closing)
-
         # advances the tokenizer
         self.tokenizer.advance()
 
+        return token
+
     def compile_class(self) -> None:
-        """Compiles a complete class:
-        'class' className '{' [classVarDec]* [subroutineDec]* '}' :
-        <class>
-            <keyword> class </keyword>
-            <identifier> className </identifier>
-            <symbol> { </symbol>
-            // classVarDec ...
-            // subroutineDec ...
-            <symbol> } </symbol>
-        </class>
+        """ Compile a class frame
         """
 
         # <class>
@@ -71,13 +54,13 @@ class CompilationEngine:
         self.tokenizer.advance()
 
         # <keyword> class </keyword>
-        self.write_token()
+        self.eat_token()
 
         # <identifier> className </identifier>
-        self.write_token()
+        self.eat_token()
 
         # <symbol> { </symbol>
-        self.write_token()
+        self.eat_token()
 
         # // classVarDec - recursive
         while self.tokenizer.get_token() in CLASS_VAR:
@@ -88,43 +71,50 @@ class CompilationEngine:
             self.compile_subroutine()
 
         # <symbol> } </symbol>
-        self.write_token()
+        self.eat_token()
 
         # </class>
         self.output_stream.write("</class>\n")
 
+    def addToSymbolTable(self, table, type, kind, separator):
+        """ Compile the sentence:
+        varName (, varName)*
+        by adding the variables declared to the given symbolTable
+        """
+        first = True
+
+        # compile varName (, varName)*
+        while self.tokenizer.get_token() == separator or first:
+
+            if not first:
+                # current token is the separator, dump it
+                self.eat_token()
+
+            # current token is the name
+            name = self.eat_token()
+
+            # add the variable to the current symbolTable
+            table.define(name, type, kind)
+
+            first = False
+
+    # DONE
     def compile_class_var_dec(self) -> None:
-        """Compiles a static declaration or a field declaration:
-        ('static'|'field') type varName [',' varName]* ';' :
-        <classVarDec>
-            <keyword> ('static'|'field') </keyword>
-            <(keyword|identifier)> type </(keyword|identifier)>
-            <identifier> varName </identifier>
-            // optional varNames ...
-            <symbol> ; </symbol>
-        </classVarDec>
+        """ Compile a class variable declaration -
+         Add them to the main symbolTable
         """
 
-        # <classVarDec>
-        self.output_stream.write("<classVarDec>\n")
+        # current token is the kind
+        kind = self.eat_token()
 
-        # <keyword> (static|field) </keyword>
-        self.write_token()
+        # current token is the type
+        type = self.eat_token()
 
-        # <(keyword|identifier)> type </(keyword|identifier)>
-        self.write_token()
+        # add the variables to the class symbolTable
+        self.addToSymbolTable(self.classSymbolTable, type, CLASS_VAR_TO_SEG[kind], ',')
 
-        # <identifier> varName </identifier>
-        self.write_token()
-
-        # // optional varName
-        self.compile_optional_terms([','], self.write_token)
-
-        # <symbol> ; </symbol>
-        self.write_token()
-
-        # </classVarDec>
-        self.output_stream.write("</classVarDec>\n")
+        # current token is ";", dump it
+        self.eat_token()
 
     def compile_subroutine(self) -> None:
         """Compiles a complete method, function, or constructor:
@@ -143,22 +133,22 @@ class CompilationEngine:
         self.output_stream.write("<subroutineDec>\n")
 
         # <keyword> ('constructor'|'function'|'method') </keyword>
-        self.write_token()
+        self.eat_token()
 
         # <(keyword|identifier)> ('void'|type) </(keyword|identifier)>
-        self.write_token()
+        self.eat_token()
 
         # <identifier> subroutineName </identifier>
-        self.write_token()
+        self.eat_token()
 
         # <symbol> ( </symbol>
-        self.write_token()
+        self.eat_token()
 
         # // parameterList - recursive
         self.compile_parameter_list()
 
         # <symbol> ) </symbol>
-        self.write_token()
+        self.eat_token()
 
         # // subroutineBody - recursive
         self.compile_subroutineBody()
@@ -183,48 +173,32 @@ class CompilationEngine:
         if self.tokenizer.get_token() != ')':
 
             # <(keyword|identifier)> type </(keyword|identifier)>
-            self.write_token()
+            self.eat_token()
 
             # <identifier> varName </identifier>
-            self.write_token()
+            self.eat_token()
 
             # // optional more parameters
-            self.compile_optional_terms([','], self.write_token, parameters=True)
+            self.compile_optional_terms([','], self.eat_token, parameters=True)
 
         # </parameterList>
         self.output_stream.write("</parameterList>\n")
 
+    # DONE
     def compile_var_dec(self) -> None:
-        """Compiles a var declaration:
-        <varDec>
-            <keyword> var </keyword>
-            <(keyword|identifier)> ('void'\type) </(keyword|identifier)>
-            <identifier> varName </identifier>
-            // optional varNames ...
-            <symbol> ; </symbol>
-        </varDec>
-        """
+        """Compile local variable declarations"""
 
-        # <varDec>
-        self.output_stream.write("<varDec>\n")
+        # current token is "var", dump it
+        self.eat_token()
 
-        # <keyword> var </keyword>
-        self.write_token()
+        # current token is the type
+        type = self.eat_token()
 
-        # <(keyword|identifier)> ('int'|'boolean'|'char'|type) </(keyword|identifier)>
-        self.write_token()
+        # add the variables to the method symbolTable
+        self.addToSymbolTable(self.methodSymbolTable, type, LOCAL, ',')
 
-        # <identifier> varName </identifier>
-        self.write_token()
-
-        # // optional varNames ...
-        self.compile_optional_terms([','], self.write_token)
-
-        # <symbol> ; </symbol>
-        self.write_token()
-
-        # </varDec>
-        self.output_stream.write("</varDec>\n")
+        # current token is ";", dump it
+        self.eat_token()
 
     def compile_statements(self) -> None:
         """Compiles a sequence of statements, not including the enclosing 
@@ -265,13 +239,13 @@ class CompilationEngine:
         self.output_stream.write("<doStatement>\n")
 
         # <keyword> do </keyword>
-        self.write_token()
+        self.eat_token()
 
         # // subroutineCall - recursive
         self.compile_subroutine_call()
 
         # <symbol> ; </symbol>
-        self.write_token()
+        self.eat_token()
 
         # </doStatement>
         self.output_stream.write("</doStatement>\n")
@@ -291,29 +265,29 @@ class CompilationEngine:
         self.output_stream.write("<letStatement>\n")
 
         # <keyword> let </keyword>
-        self.write_token()
+        self.eat_token()
 
         # <identifier> varName </identifier>
-        self.write_token()
+        self.eat_token()
 
         if self.tokenizer.get_token() == '[':
             # <symbol> [ </symbol>
-            self.write_token()
+            self.eat_token()
 
             # // expression - recursive
             self.compile_expression()
 
             # <symbol> ] </symbol>
-            self.write_token()
+            self.eat_token()
 
         # <symbol> = </symbol>
-        self.write_token()
+        self.eat_token()
 
         # // expression - recursive
         self.compile_expression()
 
         # <symbol> ; </symbol>
-        self.write_token()
+        self.eat_token()
 
         # </letStatement>
         self.output_stream.write("</letStatement>\n")
@@ -335,25 +309,25 @@ class CompilationEngine:
         self.output_stream.write("<whileStatement>\n")
 
         # <keyword> while </keyword>
-        self.write_token()
+        self.eat_token()
 
         # <symbol> ( </symbol>
-        self.write_token()
+        self.eat_token()
 
         # // expression - recursive
         self.compile_expression()
 
         # <symbol> ) </symbol>
-        self.write_token()
+        self.eat_token()
 
         # <symbol> { </symbol>
-        self.write_token()
+        self.eat_token()
 
         # // statements - recursive
         self.compile_statements()
 
         # <symbol> } </symbol>
-        self.write_token()
+        self.eat_token()
 
         # </whileStatement>
         self.output_stream.write("</whileStatement>\n")
@@ -372,70 +346,60 @@ class CompilationEngine:
         self.output_stream.write("<returnStatement>\n")
 
         # <keyword> return </keyword>
-        self.write_token()
+        self.eat_token()
 
         # // expression? - recursive
         if self.tokenizer.get_token() != ';':
             self.compile_expression()
 
         # <symbol> ; </symbol>
-        self.write_token()
+        self.eat_token()
 
         # </returnStatement>
         self.output_stream.write("</returnStatement>\n")
 
     def compile_if(self) -> None:
-        """Compiles a if statement, possibly with a trailing else clause:
-        'if' '(' expression ')' '{' statements '}' [else]? >>>
-        <ifStatement>
-            <keyword> if </keyword>
-            <symbol> ( </symbol>
-            // expression ...
-            <symbol> ) </symbol>
-            <symbol> { </symbol>
-            // statements ...
-            <symbol> } </symbol>
-            // else?
-        </ifStatement>
+        """ Compile a let statement:
+
         """
 
         # <ifStatement>
         self.output_stream.write("<ifStatement>\n")
 
         # <keyword> if </keyword>
-        self.write_token()
+        self.eat_token()
 
         # <symbol> ( </symbol>
-        self.write_token()
+        self.eat_token()
 
         # // expression - recursive
         self.compile_expression()
 
         # <symbol> ) </symbol>
-        self.write_token()
+        self.eat_token()
 
         # <symbol> { </symbol>
-        self.write_token()
+        self.eat_token()
 
         # // statements - recursive
         self.compile_statements()
 
         # <symbol> } </symbol>
-        self.write_token()
+        self.eat_token()
 
         # //else?
         if self.tokenizer.get_token() == 'else':
             # <keyword> else </keyword>
-            self.write_token()
+            self.eat_token()
 
             # <symbol> { </symbol>
-            self.write_token()
+            self.eat_token()
 
             # // statements - recursive
             self.compile_statements()
 
             # <symbol> } </symbol>
-            self.write_token()
+            self.eat_token()
 
         # </ifStatement>
         self.output_stream.write("</ifStatement>\n")
@@ -477,21 +441,21 @@ class CompilationEngine:
 
         if self.tokenizer.token_type() in CONSTANTS:
             # <(stringConstant|integerConstant|keyword> term </(stringConstant|integerConstant|keyword>
-            self.write_token()
+            self.eat_token()
 
         elif self.tokenizer.get_token() == '(':
             # <symbol> ( </symbol>
-            self.write_token()
+            self.eat_token()
 
             # expression ...
             self.compile_expression()
 
             # <symbol> ) </symbol>
-            self.write_token()
+            self.eat_token()
 
         elif self.tokenizer.get_token() in UNARY_OP:
             # <symbol> unaryOp </symbol>
-            self.write_token()
+            self.eat_token()
 
             # // term ...
             self.compile_term()
@@ -500,30 +464,30 @@ class CompilationEngine:
         # current token is an identifier. print it and advance token:
 
             # <identifier> name </identifier>
-            self.write_token()
+            self.eat_token()
 
             if self.tokenizer.get_token() == '[':
                 # <symbol> [ </symbol>
-                self.write_token()
+                self.eat_token()
 
                 # // expression - recursive
                 self.compile_expression()
 
                 # <symbol> ] </symbol>
-                self.write_token()
+                self.eat_token()
 
             elif self.tokenizer.get_token() == '.':
                 self.compile_subroutine_call(print_identifier=False)
 
             elif self.tokenizer.get_token() == '(':
                 # <symbol> ( </symbol>
-                self.write_token()
+                self.eat_token()
 
                 # expressionList ...
                 self.compile_expression_list()
 
                 # <symbol> ) </symbol>
-                self.write_token()
+                self.eat_token()
 
         # </term>
         self.output_stream.write("</term>\n")
@@ -566,26 +530,26 @@ class CompilationEngine:
 
         if print_identifier:
             # <identifier> mainName </identifier>
-            self.write_token()
+            self.eat_token()
 
         if self.tokenizer.get_token() == '(':
             pass
 
         else:
             # <symbol> . </symbol>
-            self.write_token()
+            self.eat_token()
 
             # <identifier> subName </identifier>
-            self.write_token()
+            self.eat_token()
 
         # <symbol> '(' </symbol>
-        self.write_token()
+        self.eat_token()
 
         # // expressionList - recursive
         self.compile_expression_list()
 
         # <symbol> ')' </symbol>
-        self.write_token()
+        self.eat_token()
 
     def compile_subroutineBody(self):
         """ Compile a subroutineBody code:
@@ -602,7 +566,7 @@ class CompilationEngine:
         self.output_stream.write("<subroutineBody>\n")
 
         # <symbol> { </symbol>
-        self.write_token()
+        self.eat_token()
 
         # // varDec - recursive
         while self.tokenizer.get_token() == 'var':
@@ -612,7 +576,7 @@ class CompilationEngine:
         self.compile_statements()
 
         # <symbol> } </symbol>
-        self.write_token()
+        self.eat_token()
 
         # </subroutineBody>
         self.output_stream.write("</subroutineBody>\n")
@@ -633,61 +597,12 @@ class CompilationEngine:
         """
         while self.tokenizer.get_token() in separators:
 
-            # <symbol> (','|op) </symbol>
-            self.write_token()
+            # current token is the separator, dump it
+            _ = self.eat_token()
 
             if parameters:
                 # <(keyword|identifier)> type </(keyword|identifier)>
-                self.write_token()
+                self.eat_token()
 
             # call the compiler method.
             compiler()
-
-
-    ########## OLD FUNCTIONS - compile_optional_terms replaces them ########
-
-    # def compile_additional_varName(self, parameters=False):
-    #     """Compile optional varDec:
-    #     ',' varName :
-    #     # <symbol> , </symbol>
-    #     # <identifier> varName </identifier>
-    #     """
-    # while self.tokenizer.get_token() == ',':
-    #
-    #     # <symbol> , </symbol>
-    #     self.write_token()
-    #
-    #     if parameters:
-    #         # <(keyword|identifier)> type </(keyword|identifier)>
-    #         self.write_token()
-    #
-    #     # <identifier> varName </identifier>
-    #     self.write_token()
-
-    # def compile_additional_op_term(self):
-    #     """Compile additional [op term] grammar that follows a term:
-    #     [op term]* :
-    #     <symbol> op </symbol>
-    #     // term
-    #     """
-    #
-    #     while self.tokenizer.token_type() in OP:
-    #         # <symbol> op </symbol>
-    #         self.write_token()
-    #
-    #         # // term ...
-    #         self.compile_term()
-    #
-    # def compile_additional_expressions(self):
-    #     """Compile additional [',' expression] grammar that follows a expresion
-    #     <symbol> , </symbol>
-    #     // expression
-    #     """
-    #
-    #     while self.tokenizer.token_type()  == ',':
-    #         # <symbol> , </symbol>
-    #         self.write_token()
-    #
-    #         # // expression ...
-    #         self.compile_expression()
-
