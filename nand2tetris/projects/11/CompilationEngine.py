@@ -6,6 +6,12 @@ Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
 from JackTokenizer import JackTokenizer
+from Grammer import *
+
+
+# TODO: no compilexxx methods:
+#   type, className, subroutineName, variableName, statement, subroutineCall
+
 from SymbolTable import SymbolTable
 from VMWriter import VMWriter
 from Grammer import *
