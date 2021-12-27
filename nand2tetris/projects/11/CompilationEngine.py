@@ -356,7 +356,7 @@ class CompilationEngine:
         # label L2
         self.writer.write_label(L2)
 
-    def compile_call_to_function(self, name):
+    def compile_expression_for_call(self, name):
         # current token is "(", dump it
         self.eat_token()
 
@@ -386,7 +386,7 @@ class CompilationEngine:
                 # construct the full name: "class.name"
                 exp1 += self.eat_token() + self.eat_token()
             # compile the subroutine call
-            self.compile_call_to_function(exp1)
+            self.compile_expression_for_call(exp1)
 
         # // optional more op term - recursive
         self.compile_optional_terms(OP, self.compile_term)
