@@ -12,6 +12,11 @@ from Grammer import *
 # TODO: no compilexxx methods:
 #   type, className, subroutineName, variableName, statement, subroutineCall
 
+from SymbolTable import SymbolTable
+from VMWriter import VMWriter
+from Grammer import *
+
+# TODO: change every "writing" action to VMwriter call
 
 class CompilationEngine:
     """Gets input from a JackTokenizer and emits its parsed structure into an
@@ -27,6 +32,9 @@ class CompilationEngine:
         :param output_stream: The output stream.
         """
         self.tokenizer = input_stream
+        self.writer = VMWriter(output_stream)
+        self.classSymbolTable = SymbolTable()
+        self.methodSymbolTable = SymbolTable()
         self.output_stream = output_stream
 
     def write_token(self):
