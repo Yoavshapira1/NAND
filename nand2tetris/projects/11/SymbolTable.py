@@ -65,7 +65,6 @@ class SymbolTable:
         """
         if name in self.symbol_table.keys():
             return self.symbol_table[name][1]
-        return None
 
     def type_of(self, name: str) -> str:
         """
@@ -77,7 +76,6 @@ class SymbolTable:
         """
         if name in self.symbol_table.keys():
             return self.symbol_table[name][0]
-        return None
 
     def index_of(self, name: str) -> int:
         """
@@ -89,4 +87,3 @@ class SymbolTable:
         """
         if name in self.symbol_table.keys():
             return self.symbol_table[name][2]
-        return None
