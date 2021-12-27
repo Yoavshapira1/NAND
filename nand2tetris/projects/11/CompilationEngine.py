@@ -6,17 +6,10 @@ Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
 from JackTokenizer import JackTokenizer
-from Grammer import *
-
-
-# TODO: no compilexxx methods:
-#   type, className, subroutineName, variableName, statement, subroutineCall
-
 from SymbolTable import SymbolTable
 from VMWriter import VMWriter
 from Grammer import *
 
-# TODO: change every "writing" action to VMwriter call
 
 class CompilationEngine:
     """Gets input from a JackTokenizer and emits its parsed structure into an
@@ -37,6 +30,7 @@ class CompilationEngine:
         self.methodSymbolTable = SymbolTable()
         self.output_stream = output_stream
 
+    # DONE
     def eat_token(self):
         """ Return the current token and advances the tokenizer"""
 
@@ -96,6 +90,12 @@ class CompilationEngine:
                 # current token is the separator, dump it
                 self.eat_token()
 
+            # type is None iff the case is of a parameter list, where
+            # the types can vary from variable to another
+            if type is None:
+                # current token is the type
+                type = self.eat_token()
+
             # current token is the name
             name = self.eat_token()
 
@@ -122,73 +122,52 @@ class CompilationEngine:
         # current token is ";", dump it
         self.eat_token()
 
+    def reset_methodSymbolTable(self):
+        """
+        resets the current method SymbolTable to a new method scope
+        """
+        self.methodSymbolTable.start_subroutine()
+        self.methodSymbolTable.define("this", self.class_type, ARG)
+
     def compile_subroutine(self) -> None:
-        """Compiles a complete method, function, or constructor:
-        <subroutineDec>
-            <keyword> ('constructor'|'function'|'method') </keyword>
-            <(keyword|identifier)> ('void'\type) </(keyword|identifier)>
-            <identifier> subroutineName </identifier>
-            <symbol> ( </symbol>
-            // parameterList ...
-            <symbol> ) </symbol>
-            // subroutineBody ...
-        </subroutineDec>
+        """ Compile a subroutine declaration:
+        add the name of the method to the symbolTable, and creat a new local
+        symbolTable initialized with "this" variable.
         """
 
-        # <subroutineDec>
-        self.output_stream.write("<subroutineDec>\n")
+        # current token is the type - (constructor|method|function)
+        type = self.eat_token()
 
-        # <keyword> ('constructor'|'function'|'method') </keyword>
+        # current token is the return type
+        return_type = self.eat_token()
+
+        # current token is the name
+        name = self.eat_token()
+
+        # current token is "(", dump it
         self.eat_token()
 
-        # <(keyword|identifier)> ('void'|type) </(keyword|identifier)>
-        self.eat_token()
+        # resets the subroutine symbolTable for a new scope
+        self.reset_methodSymbolTable()
 
-        # <identifier> subroutineName </identifier>
-        self.eat_token()
-
-        # <symbol> ( </symbol>
-        self.eat_token()
-
-        # // parameterList - recursive
+        # next tokens are the argument of the subroutine - add them
+        # to a the new subroutine symbolTable
         self.compile_parameter_list()
 
-        # <symbol> ) </symbol>
+        # current token is ")", dump it
         self.eat_token()
 
         # // subroutineBody - recursive
         self.compile_subroutineBody()
 
-        # </subroutineDec>
-        self.output_stream.write("</subroutineDec>\n")
-
+    # DONE
     def compile_parameter_list(self) -> None:
-        """Compiles a (possibly empty) parameter list, not including the 
-        enclosing "()":
-        [(type varName) [',' type varName]*]? :
-        <parameterList>
-          [<(keyword|identifier)> type </(keyword|identifier)>
-          <identifier> varName </identifier>]?
-          // optional more parameters ...
-        </parameterList>
+        """Compiles parameter list of a subroutine - add them to the
+        right symbolTable
         """
 
-        # <parameterList>
-        self.output_stream.write("<parameterList>\n")
-
         if self.tokenizer.get_token() != ')':
-
-            # <(keyword|identifier)> type </(keyword|identifier)>
-            self.eat_token()
-
-            # <identifier> varName </identifier>
-            self.eat_token()
-
-            # // optional more parameters
-            self.compile_optional_terms([','], self.eat_token, parameters=True)
-
-        # </parameterList>
-        self.output_stream.write("</parameterList>\n")
+            self.addToSymbolTable(self.methodSymbolTable, None, ARG, ',')
 
     # DONE
     def compile_var_dec(self) -> None:
@@ -201,7 +180,7 @@ class CompilationEngine:
         type = self.eat_token()
 
         # add the variables to the method symbolTable
-        self.addToSymbolTable(self.methodSymbolTable, type, LOCAL, ',')
+        self.addToSymbolTable(self.methodSymbolTable, type, LCL, ',')
 
         # current token is ";", dump it
         self.eat_token()
@@ -432,18 +411,8 @@ class CompilationEngine:
         self.output_stream.write("</expression>\n")
 
     def compile_term(self) -> None:
-        """Compiles a term. 
-        This routine is faced with a slight difficulty when
-        trying to decide between some of the alternative parsing rules.
-        Specifically, if the current token is an identifier, the routing must
-        distinguish between a variable, an array entry, and a subroutine call.
-        A single look-ahead token, which may be one of "[", "(", or "." suffices
-        to distinguish between the three possibilities. Any other token is not
-        part of this term and should not be advanced over.
+        """ Compiles a single statement
         """
-
-        # <term>
-        self.output_stream.write("<term>\n")
 
         if self.tokenizer.token_type() in CONSTANTS:
             # <(stringConstant|integerConstant|keyword> term </(stringConstant|integerConstant|keyword>
@@ -558,14 +527,7 @@ class CompilationEngine:
         self.eat_token()
 
     def compile_subroutineBody(self):
-        """ Compile a subroutineBody code:
-        '{' [varDec]* statements '}' :
-        <subroutineBody>
-            <symbol> { </symbol>
-            // varDec ...
-            // statements ...
-            <symbol> } </symbol>
-        </subroutineBody>
+        """ Compile a subroutineBody variables & statements
         """
 
         # <subroutineBody>

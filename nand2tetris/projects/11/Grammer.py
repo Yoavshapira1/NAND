@@ -36,17 +36,19 @@ UNARY_OP = ['-', '~', '#', '^']
 CONSTANTS = [STRING_CONSTANT, INTEGER_CONSTANT, KEYWORD]
 SUBROUTINE = ["method", "function", "constructor"]
 CLASS_VAR = ["static", "field"]
-LOCAL = "local"
-ARG = "arguments"
-STATIC = "static"
-FIELD = "field"
+LCL = "local"
 THIS = "this"
 THAT = "that"
 CONST = "constant"
 POINTER = "pointer"
+TEMP = "temp"
+STATIC = "static"
+FIELD = "this"
+ARG = "argument"
+VAR = "local"
 
 # USEFUL DICTIONARIES
 
-CLASS_VAR_TO_SEG = {"static": "static", "field": "this"}
+CLASS_VAR_TO_SEG = {"static": STATIC, "field": FIELD}
 OPERATOR_TO_VM = {"+": "add", "-": "sub", "&": "and", "|": "or", ">": "gt",
                   "<": "lt", "=": "eq", "~": "not"}
