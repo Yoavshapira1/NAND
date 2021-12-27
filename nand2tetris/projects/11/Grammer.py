@@ -36,6 +36,7 @@ UNARY_OP = ['-', '~', '#', '^']
 CONSTANTS = [STRING_CONSTANT, INTEGER_CONSTANT, KEYWORD]
 SUBROUTINE = ["method", "function", "constructor"]
 CLASS_VAR = ["static", "field"]
+
 LCL = "local"
 THIS = "this"
 THAT = "that"
@@ -47,8 +48,17 @@ FIELD = "this"
 ARG = "argument"
 VAR = "local"
 
+ADD = "add"
+SUB = "sub"
+EQ = "eq"
+GT = "gt"
+LT = "lt"
+AND = "and"
+OR = "or"
+NEG = "neg"
+
 # USEFUL DICTIONARIES
 
 CLASS_VAR_TO_SEG = {"static": STATIC, "field": FIELD}
-OPERATOR_TO_VM = {"+": "add", "-": "sub", "&": "and", "|": "or", ">": "gt",
-                  "<": "lt", "=": "eq", "~": "not"}
+OPERATOR_TO_VM = {"+": ADD, "-": SUB, "&": AND, "|": OR, ">": GT,
+                  "<": LT, "=": EQ, "~": NEG}
