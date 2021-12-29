@@ -433,19 +433,81 @@ class CompilationEngine:
         return exp
 
     def compile_expression(self) -> None:
-        """Compiles an expression,
-        first constructs the entire expression"""
+        """Compiles an expression"""
 
-        # reads the full expression. after that,
-        # the tokenizer is located AFTER the expression
-        # so the rest of the job don't involve the tokenizer
-        exp = self.read_expression()
+        token = self.tokenizer.get_token()
 
-        matches = re.findall(r'(?:'+TERM+')+', exp)
-        matches = re.findall(TERM, exp)
+        # first term of the expression is constant integer.
+        if self.tokenizer.token_type() == INTEGER_CONSTANT:
+            self.writer.write_push("constant", int(token))
+            self.eat_token()
 
-        print(matches)
-        exit()
+            if self.tokenizer.token_type() in OP:
+                op = self.tokenizer.get_token()
+                self.compile_expression()
+                self.writer.write_arithmetic(op)
+
+        # first term of the expression is identifier.
+        elif self.tokenizer.token_type() == TOKEN_TYPES_REGEX[IDENTIFIER]:
+            cur = token
+            self.eat_token()
+            while self.tokenizer.get_token() == '.':
+                cur += '.' + self.tokenizer.get_token()
+                self.eat_token()
+            if self.tokenizer.get_token() == '(':
+                self.eat_token()
+                args = 0
+                while self.tokenizer.get_token() != ')':
+                    self.compile_expression()
+                    args += 1
+                    if self.tokenizer.get_token() == ',':
+                        self.eat_token()
+                self.eat_token()
+                self.writer.write_call(cur, args)
+            elif self.tokenizer.get_token() == '[':
+                self.eat_token()
+                self.writer.write_push(*self.find_symbol(cur))
+                self.compile_expression()
+                self.eat_token()
+                self.writer.write_arithmetic('+')
+                self.writer.write_pop("pointer", 1)
+                self.writer.write_push("that", 0)
+
+            else:
+                self.writer.write_push(*self.find_symbol(cur))
+                self.eat_token()
+
+            if self.tokenizer.token_type() in OP:
+                op = self.tokenizer.get_token()
+                self.compile_expression()
+                self.writer.write_arithmetic(op)
+
+        elif self.tokenizer.token_type() in UNARY_OP:
+            op = self.tokenizer.get_token()
+            self.compile_expression()
+            self.writer.write_arithmetic(op + op if op == '-' else op)
+
+        # # first term of the expression
+        # exp1 = self.eat_token()
+        #
+        # if exp1 in UNARY_OP:
+        #     pass
+        #     # compile exp1 and OP
+        #
+        # if self.tokenizer.get_token() in OP :
+        #     pass
+        #     # compile exp1, exp2 and OP
+        #
+        # # if token is"(", so this is a subroutine call
+        # if self.tokenizer.get_token() == '(' or '.':
+        #     if self.tokenizer.get_token() == '.':
+        #         # construct the full name: "class.name"
+        #         exp1 += self.eat_token() + self.eat_token()
+        #     # compile the subroutine call
+        #     self.compile_expression_for_call(exp1)
+        #
+        # # // optional more op term - recursive
+        # self.compile_optional_terms(OP, self.compile_term)
 
     def compile_term(self, exp) -> str:
         """ Compiles a single term"""
