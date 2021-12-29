@@ -30,6 +30,8 @@ class CompilationEngine:
         self.methodSymbolTable = SymbolTable()
         self.output_stream = output_stream
         self.label_count = 0
+        self.field_count = 0
+        self.type = ""
 
     # DONE
     def eat_token(self):
@@ -46,21 +48,18 @@ class CompilationEngine:
 
         return token
 
+    # DONE
     def compile_class(self) -> None:
         """ Compile a class frame
         """
 
-        # <class>
-        self.output_stream.write("<class>\n")
-        self.tokenizer.advance()
-
-        # <keyword> class </keyword>
+        # current token is "class", dump it
         self.eat_token()
 
-        # <identifier> className </identifier>
-        self.eat_token()
+        # current token is the type of this class object, keep it as a field
+        self.type = self.eat_token()
 
-        # <symbol> { </symbol>
+        # current token is "{", dump it
         self.eat_token()
 
         # // classVarDec - recursive
@@ -71,15 +70,21 @@ class CompilationEngine:
         while self.tokenizer.get_token() in SUBROUTINE:
             self.compile_subroutine()
 
-        # <symbol> } </symbol>
+        # current token is "}", dump it
         self.eat_token()
 
-        # </class>
-        self.output_stream.write("</class>\n")
+    # DONE
+    def find_symbol(self, symbol : str):
+        """
+        Find a given symbol representation: it's segment and it's index
+        """
+        if self.methodSymbolTable.kind_of(symbol):
+            return self.methodSymbolTable.kind_of(symbol),\
+                   self.methodSymbolTable.index_of(symbol)
+        return self.classSymbolTable.kind_of(symbol),\
+               self.classSymbolTable.index_of(symbol)
 
-    def find_symbol(self, symbol : str) -> list:
-        pass
-
+    # DONE
     def addToSymbolTable(self, table, type, kind, separator):
         """ Compile the sentence:
         varName (, varName)*
@@ -106,6 +111,10 @@ class CompilationEngine:
             # add the variable to the current symbolTable
             table.define(name, type, kind)
 
+            # id var is field, update field count
+            if kind == FIELD:
+                self.field_count += 1
+
             first = False
 
     # DONE
@@ -126,13 +135,24 @@ class CompilationEngine:
         # current token is ";", dump it
         self.eat_token()
 
+    # DONE
     def reset_methodSymbolTable(self):
         """
         resets the current method SymbolTable to a new method scope
         """
         self.methodSymbolTable.start_subroutine()
-        self.methodSymbolTable.define("this", self.class_type, ARG)
+        self.methodSymbolTable.define("this", self.type, ARG)
 
+    # DONE
+    def allocate(self):
+        """
+        Allocate memory for the class object
+        """
+        self.writer.write_push(CONSTANTS, self.field_count)
+        self.writer.write_call("Memory.alloc", 1)
+        self.writer.write_pop(POINTER, 0)
+
+    # DONE
     def compile_subroutine(self) -> None:
         """ Compile a subroutine declaration:
         add the name of the method to the symbolTable, and create a new local
@@ -140,7 +160,8 @@ class CompilationEngine:
         """
 
         # current token is the type - (constructor|method|function)
-        type = self.eat_token()
+        if self.eat_token() == 'constructor':
+            self.allocate()
 
         # current token is the return type
         return_type = self.eat_token()
@@ -162,7 +183,7 @@ class CompilationEngine:
         self.eat_token()
 
         # // subroutineBody - recursive
-        self.compile_subroutineBody()
+        self.compile_subroutineBody(name)
 
     # DONE
     def compile_parameter_list(self) -> None:
@@ -189,6 +210,7 @@ class CompilationEngine:
         # current token is ";", dump it
         self.eat_token()
 
+    # DONE
     def compile_statements(self) -> None:
         """Compiles a sequence of statements, not including the enclosing 
         "{}":
@@ -213,43 +235,58 @@ class CompilationEngine:
         # current token is "do", dump it
         self.eat_token()
 
-        # // subroutineCall - recursive
+        # subroutineCall
         self.compile_subroutine_call()
 
         # # current token is ";", dump it
         self.eat_token()
 
-
+    # DONE
     def compile_let(self) -> None:
         """Compiles a let statement"""
 
         # current token is "let", dump it
         self.eat_token()
 
-        # <identifier> varName </identifier>
-        self.eat_token()
+        # current token is the name
+        varName = self.eat_token()
 
+        isArray = False
         if self.tokenizer.get_token() == '[':
-            # <symbol> [ </symbol>
+            isArray = True
+            # current token is'[', dump it
             self.eat_token()
 
-            # // expression - recursive
+            # push arrName
+            self.writer.write_push(*self.find_symbol(varName))
+
+            # this expression represents an index of an array.
+            # push index
             self.compile_expression()
 
-            # <symbol> ] </symbol>
+            # add
+            self.writer.write_arithmetic(ADD)
+
+            # pop pointer 1
+            self.writer.write_pop(POINTER, 1)
+
+            # current token is']', dump it
             self.eat_token()
-
-        # <symbol> = </symbol>
+        # current token is '=', dump it
         self.eat_token()
 
-        # // expression - recursive
+        # compile expression - push right hand side
         self.compile_expression()
-
-        # <symbol> ; </symbol>
+        # current token is ';', dump it
         self.eat_token()
 
-        # </letStatement>
-        self.output_stream.write("</letStatement>\n")
+        if isArray:
+            # pop that 0
+            self.writer.write_pop(THAT, 0)
+
+        else:
+            # pop varName
+            self.writer.write_pop(*self.find_symbol(varName))
 
     # DONE
     def compile_while(self) -> None:
@@ -356,6 +393,7 @@ class CompilationEngine:
         # label L2
         self.writer.write_label(L2)
 
+    # DONE
     def compile_expression_for_call(self, name):
         # current token is "(", dump it
         self.eat_token()
@@ -368,28 +406,46 @@ class CompilationEngine:
         # current token is ")", dump it
         self.eat_token()
 
+    # DONE
+    def read_expression(self):
+        circular_par, square_par = 0, 0
+        exp = ""
+        while True:
+            if self.tokenizer.get_token() == '(':
+                circular_par += 1
+            elif self.tokenizer.get_token() == '[':
+                square_par += 1
+            elif self.tokenizer.get_token() == ',':
+                break
+            elif self.tokenizer.get_token() == ';':
+                break
+            elif self.tokenizer.get_token() == ')':
+                if circular_par == 0:
+                    break
+                else:
+                    circular_par -= 1
+            elif self.tokenizer.get_token() == ']':
+                if square_par == 0:
+                    break
+                else:
+                    square_par -= 1
+            exp += self.eat_token()
+        return exp
+
     def compile_expression(self) -> None:
-        """Compiles an expression"""
+        """Compiles an expression,
+        first constructs the entire expression"""
 
-        # first term of the expression
-        exp1 = self.eat_token()
+        # reads the full expression. after that,
+        # the tokenizer is located AFTER the expression
+        # so the rest of the job don't involve the tokenizer
+        exp = self.read_expression()
 
-        if exp1 in UNARY_OP:
-            # compile exp1 and OP
+        matches = re.findall(r'(?:'+TERM+')+', exp)
+        matches = re.findall(TERM, exp)
 
-        if self.tokenizer.get_token() in OP :
-            # compile exp1, exp2 and OP
-
-        # if token is"(", so this is a subroutine call
-        if self.tokenizer.get_token() == '(' or '.':
-            if self.tokenizer.get_token() == '.':
-                # construct the full name: "class.name"
-                exp1 += self.eat_token() + self.eat_token()
-            # compile the subroutine call
-            self.compile_expression_for_call(exp1)
-
-        # // optional more op term - recursive
-        self.compile_optional_terms(OP, self.compile_term)
+        print(matches)
+        exit()
 
     def compile_term(self, exp) -> str:
         """ Compiles a single term"""
@@ -448,6 +504,7 @@ class CompilationEngine:
         # </term>
         self.output_stream.write("</term>\n")
 
+    # DONE
     def compile_expression_list(self) -> int:
         """Compiles an expression list. This if called only from a subroutine
         call compiler, where the expressions are not needed but their count
@@ -459,7 +516,6 @@ class CompilationEngine:
         # if there is any expression
         if self.tokenizer.get_token() != ')':
 
-            # TODO: change this function
             self.compile_expression()
             counter+=1
 
@@ -502,48 +558,22 @@ class CompilationEngine:
         # call foo nArgs
         self.writer.write_call(name, nArgs)
 
-    def compile_subroutineBody(self):
-        """ Compile a subroutineBody variables & statements
-        """
+    # DONE
+    def compile_subroutineBody(self, name):
+        """ Compile a subroutineBody variables & statements"""
 
         # current token is "{", dump it
         self.eat_token()
 
         # // varDec - recursive
+        local_var_count = 0
         while self.tokenizer.get_token() == 'var':
             self.compile_var_dec()
+            local_var_count += 1
+        self.writer.write_function(name, local_var_count)
 
         # // statements - recursive
         self.compile_statements()
 
         # current token is "}", dump it
         self.eat_token()
-
-
-
-    ############################## OLD ####################
-    # def compile_optional_terms(self, separators, compiler, parameters=False):
-    #     """Compile an additional optional grammar terms, called for one of:
-    #     1) [op term]*
-    #     2) (',' varName)
-    #     3) (',' type varName)
-    #     4) (',' expression)
-    #     etc.
-    #     :param separators: list of symbols separates between terms: (op|',')
-    #     :param compiler: a callable function, one of the follow:
-    #                     self.compile_term >>> for case 1
-    #                     self.write_token >>> for cases 2, 3
-    #                     self.compile_expression >>> for case 4
-    #     :param parameters: True iff type is 3)
-    #     """
-    #     while self.tokenizer.get_token() in separators:
-    #
-    #         # current token is the separator, dump it
-    #         _ = self.eat_token()
-    #
-    #         if parameters:
-    #             # <(keyword|identifier)> type </(keyword|identifier)>
-    #             self.eat_token()
-    #
-    #         # call the compiler method.
-    #         compiler()

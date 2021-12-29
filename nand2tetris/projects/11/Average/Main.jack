@@ -6,7 +6,8 @@
 // (Same as projects/09/Average/Main.jack)
 
 // Inputs some numbers and computes their average
-class Main {
+//class Main {
+   Array.new(length[sum + a[i]]) + something.Main.foo() + 0];
    function void main() {
      var Array a; 
      var int length;

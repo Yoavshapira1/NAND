@@ -1,6 +1,5 @@
 import re
 
-
 KEYWORDS = "(class|method|function|constructor|int|" \
            "boolean|char|void|var|static|field|let|do|" \
            "if|else|while|return|true|false|null|this)"
@@ -36,6 +35,11 @@ UNARY_OP = ['-', '~', '#', '^']
 CONSTANTS = [STRING_CONSTANT, INTEGER_CONSTANT, KEYWORD]
 SUBROUTINE = ["method", "function", "constructor"]
 CLASS_VAR = ["static", "field"]
+
+
+varName_expression = IDENTIFIER + "\[.+\]"
+subroutineCall = IDENTIFIER + ""
+TERM = r"(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)" % INTEGER, STRING, KEYWORD, IDENTIFIER, varName_expression
 
 LCL = "local"
 THIS = "this"
