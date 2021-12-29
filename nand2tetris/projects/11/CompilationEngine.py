@@ -438,6 +438,9 @@ class CompilationEngine:
     def compile_expression(self) -> None:
         """Compiles an expression"""
 
+        # TODO: problem when encounter: exp + ( exp )
+        # TODO: handle Strings 
+
         token = self.tokenizer.get_token()
 
         # first term of the expression is constant integer.
