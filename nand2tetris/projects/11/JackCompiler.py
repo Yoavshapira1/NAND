@@ -24,6 +24,7 @@ def compile_file(
     tokenizer = JackTokenizer(input_file)
     compiler = CompilationEngine(tokenizer, output_file)
     while (tokenizer.has_more_tokens()):
+        compiler.compile_expression()
         compiler.compile_class()
 
 
