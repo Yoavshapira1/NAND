@@ -53,6 +53,9 @@ class CompilationEngine:
         """ Compile a class frame
         """
 
+        # starter
+        self.tokenizer.advance()
+
         # current token is "class", dump it
         self.eat_token()
 
@@ -265,7 +268,7 @@ class CompilationEngine:
             self.compile_expression()
 
             # add
-            self.writer.write_arithmetic(ADD)
+            self.writer.write_arithmetic('+')
 
             # pop pointer 1
             self.writer.write_pop(POINTER, 1)
@@ -442,8 +445,8 @@ class CompilationEngine:
             self.writer.write_push("constant", int(token))
             self.eat_token()
 
-            if self.tokenizer.token_type() in OP:
-                op = self.tokenizer.get_token()
+            if self.tokenizer.get_token() in OP:
+                op = self.eat_token()
                 self.compile_expression()
                 self.writer.write_arithmetic(op)
 
@@ -452,8 +455,7 @@ class CompilationEngine:
             cur = token
             self.eat_token()
             while self.tokenizer.get_token() == '.':
-                cur += '.' + self.tokenizer.get_token()
-                self.eat_token()
+                cur += self.eat_token() + self.eat_token()
             if self.tokenizer.get_token() == '(':
                 self.eat_token()
                 args = 0
@@ -475,15 +477,15 @@ class CompilationEngine:
 
             else:
                 self.writer.write_push(*self.find_symbol(cur))
-                self.eat_token()
+                # self.eat_token()
 
-            if self.tokenizer.token_type() in OP:
-                op = self.tokenizer.get_token()
+            if self.tokenizer.get_token() in OP:
+                op = self.eat_token()
                 self.compile_expression()
                 self.writer.write_arithmetic(op)
 
-        elif self.tokenizer.token_type() in UNARY_OP:
-            op = self.tokenizer.get_token()
+        elif self.tokenizer.get_token() in UNARY_OP:
+            op = self.eat_token()
             self.compile_expression()
             self.writer.write_arithmetic(op + op if op == '-' else op)
 
@@ -628,10 +630,9 @@ class CompilationEngine:
         self.eat_token()
 
         # // varDec - recursive
-        local_var_count = 0
         while self.tokenizer.get_token() == 'var':
             self.compile_var_dec()
-            local_var_count += 1
+        local_var_count = self.methodSymbolTable.var_count(VAR)
         self.writer.write_function(name, local_var_count)
 
         # // statements - recursive

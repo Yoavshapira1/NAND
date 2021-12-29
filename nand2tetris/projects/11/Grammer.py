@@ -37,9 +37,9 @@ SUBROUTINE = ["method", "function", "constructor"]
 CLASS_VAR = ["static", "field"]
 
 
-varName_expression = IDENTIFIER + "\[.+\]"
-subroutineCall = IDENTIFIER + ""
-TERM = r"(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)" % INTEGER, STRING, KEYWORD, IDENTIFIER, varName_expression
+# varName_expression = IDENTIFIER + "\[.+\]"
+# subroutineCall = IDENTIFIER + ""
+# TERM = r"(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)" % INTEGER, STRING, KEYWORD, IDENTIFIER, varName_expression
 
 LCL = "local"
 THIS = "this"

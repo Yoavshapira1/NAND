@@ -5,6 +5,7 @@ and as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
+from Grammer import *
 
 PUSH_COMMAND = "push {seg} {ind}\n"
 POP_COMMAND = "pop {seg} {ind}\n"
@@ -13,7 +14,7 @@ GOTO = "goto {lab}\n"
 IF = "if-goto {lab}\n"
 CALL = "call {func} {args}\n"
 FUNC = "function {func} {args}\n"
-ARITHMETIC = {'+': "ADD", '-': "SUB", '--': "NEG", '=': "EQ", '>': "GT", '<': "LT", '&': "AND", '|': "OR", '~': "NOT",
+ARITHMETIC = {'+': ADD, '-': SUB, '--': NEG, '=': EQ, '>': GT, '<': LT, '&': AND, '|': OR, '~': NEG,
               '*': "call Math.multiply 2", '/': "call Math.divide 2"}
 
 
@@ -53,7 +54,7 @@ class VMWriter:
             command (str): the command to write, can be "ADD", "SUB", "NEG", 
             "EQ", "GT", "LT", "AND", "OR", "NOT".
         """
-        self.output_stream.write(command)
+        self.output_stream.write(ARITHMETIC[command]+"\n")
 
     def write_label(self, label: str) -> None:
         """Writes a VM label command.

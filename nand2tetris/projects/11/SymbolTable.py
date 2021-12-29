@@ -49,7 +49,7 @@ class SymbolTable:
             int: the number of variables of the given kind already defined in 
             the current scope.
         """
-        return self.symbol_table[kind]
+        return self.counter[kind]
 
     def kind_of(self, name: str) -> str:
         """
