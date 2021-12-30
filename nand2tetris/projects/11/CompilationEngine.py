@@ -171,7 +171,7 @@ class CompilationEngine:
         return_type = self.eat_token()
 
         # current token is the name
-        name = self.eat_token()
+        name = self.type + "." + self.eat_token()
 
         # current token is "(", dump it
         self.eat_token()
@@ -188,9 +188,6 @@ class CompilationEngine:
 
         # // subroutineBody - recursive
         self.compile_subroutineBody(name)
-
-        # current token is ';', dump it
-        self.eat_token()
 
     # DONE
     def compile_parameter_list(self) -> None:
@@ -245,7 +242,7 @@ class CompilationEngine:
         # subroutineCall
         self.compile_subroutine_call()
 
-        # # current token is ";", dump it
+        # current token is ";", dump it
         self.eat_token()
 
     # DONE
@@ -284,8 +281,6 @@ class CompilationEngine:
 
         # compile expression - push right hand side
         self.compile_expression()
-        # current token is ';', dump it
-        self.eat_token()
 
         if isArray:
             # pop that 0
@@ -294,6 +289,9 @@ class CompilationEngine:
         else:
             # pop varName
             self.writer.write_pop(*self.find_symbol(varName))
+
+        # dump ';'
+        self.eat_token()
 
     # DONE
     def compile_while(self) -> None:
@@ -317,7 +315,7 @@ class CompilationEngine:
         self.eat_token()
 
         # neg
-        self.writer.write_arithmetic(NEG)
+        self.writer.write_arithmetic('~')
 
         # if-goto L2
         self.writer.write_if(L2)
@@ -447,6 +445,11 @@ class CompilationEngine:
 
         token = self.tokenizer.get_token()
 
+        if self.tokenizer.get_token() == '(':
+            self.eat_token()
+            self.compile_expression()
+            self.eat_token()
+
         # first term of the expression is constant integer.
         if self.tokenizer.token_type() == INTEGER_CONSTANT:
             self.writer.write_push("constant", int(token))
@@ -458,7 +461,7 @@ class CompilationEngine:
                 self.writer.write_arithmetic(op)
 
         if self.tokenizer.token_type() == STRING_CONSTANT:
-            self.writer.write_push("constant",token)
+            self.writer.write_string(token)
             self.eat_token()
 
         # first term of the expression is identifier.
@@ -500,63 +503,6 @@ class CompilationEngine:
             self.compile_expression()
             self.writer.write_arithmetic(op + op if op == '-' else op)
 
-    def compile_term(self, exp) -> str:
-        """ Compiles a single term"""
-
-        if self.tokenizer.token_type() in CONSTANTS:
-            # <(stringConstant|integerConstant|keyword> term </(stringConstant|integerConstant|keyword>
-            exp += self.eat_token()
-
-        elif self.tokenizer.get_token() == '(':
-            # <symbol> ( </symbol>
-            exp += self.eat_token()
-
-            # expression ...
-
-            self.compile_expression()
-
-            # <symbol> ) </symbol>
-            self.eat_token()
-
-        elif self.tokenizer.get_token() in UNARY_OP:
-            # <symbol> unaryOp </symbol>
-            self.eat_token()
-
-            # // term ...
-            self.compile_term()
-
-        else:
-        # current token is an identifier. print it and advance token:
-
-            # <identifier> name </identifier>
-            self.eat_token()
-
-            if self.tokenizer.get_token() == '[':
-                # <symbol> [ </symbol>
-                self.eat_token()
-
-                # // expression - recursive
-                self.compile_expression()
-
-                # <symbol> ] </symbol>
-                self.eat_token()
-
-            elif self.tokenizer.get_token() == '.':
-                self.compile_subroutine_call(print_identifier=False)
-
-            elif self.tokenizer.get_token() == '(':
-                # <symbol> ( </symbol>
-                self.eat_token()
-
-                # expressionList ...
-                self.compile_expression_list()
-
-                # <symbol> ) </symbol>
-                self.eat_token()
-
-        # </term>
-        self.output_stream.write("</term>\n")
-
     # DONE
     def compile_expression_list(self) -> int:
         """Compiles an expression list. This if called only from a subroutine
@@ -574,6 +520,7 @@ class CompilationEngine:
 
             # optional more expressions ...
             while self.tokenizer.get_token() == ',':
+                self.eat_token()
                 self.compile_expression()
                 counter+=1
 
