@@ -60,6 +60,7 @@ LT = "lt"
 AND = "and"
 OR = "or"
 NEG = "neg"
+NOT = "not"
 
 # USEFUL DICTIONARIES
 

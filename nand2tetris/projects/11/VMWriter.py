@@ -14,7 +14,7 @@ GOTO = "goto {lab}\n"
 IF = "if-goto {lab}\n"
 CALL = "call {func} {args}\n"
 FUNC = "function {func} {args}\n"
-ARITHMETIC = {'+': ADD, '-': SUB, '--': NEG, '=': EQ, '&gt;': GT, '&lt;': LT, '&amp;': AND, '|': OR, '~': NEG,
+ARITHMETIC = {'+': ADD, '-': SUB, '--': NEG, '=': EQ, '&gt;': GT, '&lt;': LT, '&amp;': AND, '|': OR, '~': NOT,
               '*': "call Math.multiply 2", '/': "call Math.divide 2"}
 
 
