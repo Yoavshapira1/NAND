@@ -145,7 +145,6 @@ class CompilationEngine:
         resets the current method SymbolTable to a new method scope
         """
         self.methodSymbolTable.start_subroutine()
-        self.methodSymbolTable.define("this", self.type, ARG)
 
     # DONE
     def allocate(self):
@@ -163,9 +162,16 @@ class CompilationEngine:
         symbolTable initialized with "this" variable.
         """
 
+        # resets the subroutine symbolTable for a new scope
+        self.reset_methodSymbolTable()
+
         # current token is the type - (constructor|method|function)
-        if self.eat_token() == 'constructor':
+        type = self.eat_token()
+        if type == 'constructor':
             self.allocate()
+
+        if type == 'method':
+            self.methodSymbolTable.define('this', self.type, ARG)
 
         # current token is the return type
         return_type = self.eat_token()
@@ -175,9 +181,6 @@ class CompilationEngine:
 
         # current token is "(", dump it
         self.eat_token()
-
-        # resets the subroutine symbolTable for a new scope
-        self.reset_methodSymbolTable()
 
         # next tokens are the argument of the subroutine - add them
         # to the new subroutine symbolTable
@@ -297,8 +300,7 @@ class CompilationEngine:
     def compile_while(self) -> None:
         """Compiles a while statement"""
 
-        L1 = "L1.%d" % self.label_count
-        L2 = "L2.%d" % self.label_count
+        L1, L2 = self.get_labels()
 
         # label L1
         self.writer.write_label(L1)
@@ -348,12 +350,19 @@ class CompilationEngine:
         # current token is ";", dump it
         self.eat_token()
 
+    def get_labels(self):
+        """Return unique name for labels"""
+        L1 = "L1.%d" % self.label_count
+        L2 = "L2.%d" % self.label_count
+        self.label_count += 1
+
+        return L1, L2
+
     # DONE
     def compile_if(self) -> None:
         """ Compile an if statement """
 
-        L1 = "L1.%d" % self.label_count
-        L2 = "L2.%d" % self.label_count
+        L1, L2 = self.get_labels()
 
         # current token is "if", dump it
         self.eat_token()
@@ -410,32 +419,6 @@ class CompilationEngine:
         self.writer.write_call(name, nArgs)
         # current token is ")", dump it
         self.eat_token()
-    #
-    # # DONE
-    # def read_expression(self):
-    #     circular_par, square_par = 0, 0
-    #     exp = ""
-    #     while True:
-    #         if self.tokenizer.get_token() == '(':
-    #             circular_par += 1
-    #         elif self.tokenizer.get_token() == '[':
-    #             square_par += 1
-    #         elif self.tokenizer.get_token() == ',':
-    #             break
-    #         elif self.tokenizer.get_token() == ';':
-    #             break
-    #         elif self.tokenizer.get_token() == ')':
-    #             if circular_par == 0:
-    #                 break
-    #             else:
-    #                 circular_par -= 1
-    #         elif self.tokenizer.get_token() == ']':
-    #             if square_par == 0:
-    #                 break
-    #             else:
-    #                 square_par -= 1
-    #         exp += self.eat_token()
-    #     return exp
 
     def compile_expression(self) -> None:
         """Compiles an expression"""
@@ -445,14 +428,28 @@ class CompilationEngine:
 
         token = self.tokenizer.get_token()
 
+        if self.tokenizer.token_type() == KEYWORD:
+            token = self.eat_token()
+            if token == "true":
+                self.writer.write_push(CONST, 1)
+                self.writer.write_arithmetic('--')
+            elif token in ["false", "null"]:
+                self.writer.write_push(CONST, 0)
+            elif token == "this":
+                self.writer.write_push(*self.find_symbol(token))
+
         if self.tokenizer.get_token() == '(':
             self.eat_token()
             self.compile_expression()
             self.eat_token()
+            if self.tokenizer.get_token() in OP:
+                op = self.eat_token()
+                self.compile_expression()
+                self.writer.write_arithmetic(op)
 
         # first term of the expression is constant integer.
         if self.tokenizer.token_type() == INTEGER_CONSTANT:
-            self.writer.write_push("constant", int(token))
+            self.writer.write_push("constant", token)
             self.eat_token()
 
             if self.tokenizer.get_token() in OP:
@@ -491,7 +488,6 @@ class CompilationEngine:
 
             else:
                 self.writer.write_push(*self.find_symbol(cur))
-                # self.eat_token()
 
             if self.tokenizer.get_token() in OP:
                 op = self.eat_token()
