@@ -14,7 +14,7 @@ GOTO = "goto {lab}\n"
 IF = "if-goto {lab}\n"
 CALL = "call {func} {args}\n"
 FUNC = "function {func} {args}\n"
-ARITHMETIC = {'+': ADD, '-': SUB, '--': NEG, '=': EQ, '>': GT, '<': LT, '&': AND, '|': OR, '~': NEG,
+ARITHMETIC = {'+': ADD, '-': SUB, '--': NEG, '=': EQ, '&gt;': GT, '&lt;': LT, '&amp;': AND, '|': OR, '~': NEG,
               '*': "call Math.multiply 2", '/': "call Math.divide 2"}
 
 
@@ -100,7 +100,15 @@ class VMWriter:
 
     def write_return(self) -> None:
         """Writes a VM return command."""
-        self.output_stream.write("return")
+        self.output_stream.write("return\n")
+
+    def write_string(self, str):
+        """Allocate a new String"""
+        self.write_push(CONST, len(str))
+        self.write_call("String.new", 1)
+        for char in str:
+            self.write_push(CONST, ord(char))
+            self.write_call("String.appendChar", 2)
 
     def close(self) -> None:
         """Closes the output file."""

@@ -94,6 +94,7 @@ class CompilationEngine:
         by adding the variables declared to the given symbolTable
         """
         first = True
+        getType = True if type is None else False
 
         # compile varName (, varName)*
         while self.tokenizer.get_token() == separator or first:
@@ -104,7 +105,7 @@ class CompilationEngine:
 
             # type is None iff the case is of a parameter list, where
             # the types can vary from variable to another
-            if type is None:
+            if getType:
                 # current token is the type
                 type = self.eat_token()
 
@@ -151,7 +152,7 @@ class CompilationEngine:
         """
         Allocate memory for the class object
         """
-        self.writer.write_push(CONSTANTS, self.field_count)
+        self.writer.write_push(CONST, self.field_count)
         self.writer.write_call("Memory.alloc", 1)
         self.writer.write_pop(POINTER, 0)
 
@@ -187,6 +188,9 @@ class CompilationEngine:
 
         # // subroutineBody - recursive
         self.compile_subroutineBody(name)
+
+        # current token is ';', dump it
+        self.eat_token()
 
     # DONE
     def compile_parameter_list(self) -> None:
@@ -366,7 +370,7 @@ class CompilationEngine:
         self.eat_token()
 
         # neg
-        self.writer.write_arithmetic(NEG)
+        self.writer.write_arithmetic('~')
 
         # if-goto L1
         self.writer.write_if(L1)
@@ -408,38 +412,38 @@ class CompilationEngine:
         self.writer.write_call(name, nArgs)
         # current token is ")", dump it
         self.eat_token()
-
-    # DONE
-    def read_expression(self):
-        circular_par, square_par = 0, 0
-        exp = ""
-        while True:
-            if self.tokenizer.get_token() == '(':
-                circular_par += 1
-            elif self.tokenizer.get_token() == '[':
-                square_par += 1
-            elif self.tokenizer.get_token() == ',':
-                break
-            elif self.tokenizer.get_token() == ';':
-                break
-            elif self.tokenizer.get_token() == ')':
-                if circular_par == 0:
-                    break
-                else:
-                    circular_par -= 1
-            elif self.tokenizer.get_token() == ']':
-                if square_par == 0:
-                    break
-                else:
-                    square_par -= 1
-            exp += self.eat_token()
-        return exp
+    #
+    # # DONE
+    # def read_expression(self):
+    #     circular_par, square_par = 0, 0
+    #     exp = ""
+    #     while True:
+    #         if self.tokenizer.get_token() == '(':
+    #             circular_par += 1
+    #         elif self.tokenizer.get_token() == '[':
+    #             square_par += 1
+    #         elif self.tokenizer.get_token() == ',':
+    #             break
+    #         elif self.tokenizer.get_token() == ';':
+    #             break
+    #         elif self.tokenizer.get_token() == ')':
+    #             if circular_par == 0:
+    #                 break
+    #             else:
+    #                 circular_par -= 1
+    #         elif self.tokenizer.get_token() == ']':
+    #             if square_par == 0:
+    #                 break
+    #             else:
+    #                 square_par -= 1
+    #         exp += self.eat_token()
+    #     return exp
 
     def compile_expression(self) -> None:
         """Compiles an expression"""
 
         # TODO: problem when encounter: exp + ( exp )
-        # TODO: handle Strings 
+        # TODO: keyword "this" can be an expression
 
         token = self.tokenizer.get_token()
 
@@ -452,6 +456,10 @@ class CompilationEngine:
                 op = self.eat_token()
                 self.compile_expression()
                 self.writer.write_arithmetic(op)
+
+        if self.tokenizer.token_type() == STRING_CONSTANT:
+            self.writer.write_push("constant",token)
+            self.eat_token()
 
         # first term of the expression is identifier.
         elif self.tokenizer.token_type() == TOKEN_TYPES_REGEX[IDENTIFIER]:
@@ -491,28 +499,6 @@ class CompilationEngine:
             op = self.eat_token()
             self.compile_expression()
             self.writer.write_arithmetic(op + op if op == '-' else op)
-
-        # # first term of the expression
-        # exp1 = self.eat_token()
-        #
-        # if exp1 in UNARY_OP:
-        #     pass
-        #     # compile exp1 and OP
-        #
-        # if self.tokenizer.get_token() in OP :
-        #     pass
-        #     # compile exp1, exp2 and OP
-        #
-        # # if token is"(", so this is a subroutine call
-        # if self.tokenizer.get_token() == '(' or '.':
-        #     if self.tokenizer.get_token() == '.':
-        #         # construct the full name: "class.name"
-        #         exp1 += self.eat_token() + self.eat_token()
-        #     # compile the subroutine call
-        #     self.compile_expression_for_call(exp1)
-        #
-        # # // optional more op term - recursive
-        # self.compile_optional_terms(OP, self.compile_term)
 
     def compile_term(self, exp) -> str:
         """ Compiles a single term"""
@@ -603,15 +589,8 @@ class CompilationEngine:
         # current token is a name - might be a class name
         name = self.eat_token()
 
-        if self.tokenizer.get_token() == '(':
-            pass
-
-        else:
-            # current token is ".", add it to name
-            name += self.eat_token()
-
-            # current token is the name of the subroutine
-            name += self.eat_token()
+        while self.tokenizer.get_token() == '.':
+            name += self.eat_token() + self.eat_token()
 
         # current token is "(", dump it
         self.eat_token()

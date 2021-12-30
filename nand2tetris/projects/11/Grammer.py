@@ -64,5 +64,3 @@ NEG = "neg"
 # USEFUL DICTIONARIES
 
 CLASS_VAR_TO_SEG = {"static": STATIC, "field": FIELD}
-OPERATOR_TO_VM = {"+": ADD, "-": SUB, "&": AND, "|": OR, ">": GT,
-                  "<": LT, "=": EQ, "~": NEG}
