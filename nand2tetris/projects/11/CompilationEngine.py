@@ -87,7 +87,7 @@ class CompilationEngine:
             return self.methodSymbolTable.kind_of(symbol),\
                    self.methodSymbolTable.index_of(symbol)
         if type:
-            return self.methodSymbolTable.type_of(symbol)
+            return self.classSymbolTable.type_of(symbol)
         return self.classSymbolTable.kind_of(symbol),\
                self.classSymbolTable.index_of(symbol)
 
@@ -192,7 +192,7 @@ class CompilationEngine:
         self.eat_token()
 
         # // subroutineBody - recursive
-        self.compile_subroutineBody(name, type == 'constructor')
+        self.compile_subroutineBody(name, type)
 
     # DONE
     def compile_parameter_list(self) -> None:
@@ -220,7 +220,7 @@ class CompilationEngine:
         self.eat_token()
 
     # DONE
-    def compile_statements(self, is_constructor=False) -> None:
+    def compile_statements(self, subroutine_type=None) -> None:
         """Compiles a sequence of statements, not including the enclosing 
         "{}":
         """
@@ -235,7 +235,7 @@ class CompilationEngine:
             elif self.tokenizer.get_token() == 'if':
                 self.compile_if()
             elif self.tokenizer.get_token() == 'return':
-                if is_constructor:
+                if subroutine_type == 'constructor':
                     self.writer.write_push(POINTER, 0)
                     self.writer.write_return()
                     self.eat_token()     # 'return'
@@ -286,9 +286,6 @@ class CompilationEngine:
             # add
             self.writer.write_arithmetic('+')
 
-            # pop pointer 1
-            self.writer.write_pop(POINTER, 1)
-
             # current token is']', dump it
             self.eat_token()
         # current token is '=', dump it
@@ -298,6 +295,15 @@ class CompilationEngine:
         self.compile_expression()
 
         if isArray:
+            # pop temp 0
+            self.writer.write_pop(TEMP, 0)
+
+            # pop pointer 1
+            self.writer.write_pop(POINTER, 1)
+
+            # push temp 0
+            self.writer.write_push(TEMP, 0)
+
             # pop that 0
             self.writer.write_pop(THAT, 0)
 
@@ -479,25 +485,40 @@ class CompilationEngine:
         elif self.tokenizer.token_type() == TOKEN_TYPES_REGEX[IDENTIFIER]:
             cur = token
             self.eat_token()
-            while self.tokenizer.get_token() == '.':
-                cur += self.eat_token() + self.eat_token()
+            this_obj = True
+            obj = self.type
+            if self.tokenizer.get_token() == '.':
+                this_obj = False
+                obj = cur
+                self.eat_token()
+                name = self.eat_token()
+            else:
+                name = cur
             if self.tokenizer.get_token() == '(':
                 self.eat_token()
-                # args = 0
-                # while self.tokenizer.get_token() != ')':
-                #     self.compile_expression()
-                #     args += 1
-                #     if self.tokenizer.get_token() == ',':
-                #         self.eat_token()
-                # self.eat_token()
-                # name = cur
-                # if "." not in name:
-                #     name = self.type + "." + name
-                #     # push pointer 0
-                #     self.writer.write_pop(POINTER, 0)
-                #     args += 1
-                # self.writer.write_call(name, args)
-                self.compile_subroutine_call()
+
+                nArgs = 0
+
+                # push obj
+                if this_obj:
+                    self.writer.write_push(POINTER, 0)
+                    nArgs += 1
+                else:
+                    if self.find_symbol(obj, type=True) is not None:
+                        self.writer.write_push(*self.find_symbol(obj))
+                        obj = self.find_symbol(obj, type=True)
+                        nArgs += 1
+
+                # count number of arguments for the call
+                nArgs += self.compile_expression_list()
+
+                # current token is ")"
+                self.eat_token()
+
+                # call (obj.)?foo nArgs
+                self.writer.write_call(obj + "." + name, nArgs)
+
+
             elif self.tokenizer.get_token() == '[':
                 self.eat_token()
                 self.writer.write_push(*self.find_symbol(cur))
@@ -547,44 +568,54 @@ class CompilationEngine:
     def compile_subroutine_call(self) -> None:
 
         """Compile a subroutineCall:
-        call (class.)*foo nArgs
+        call (class.)?foo nArgs
          """
 
-        # current token is a name - might be a class name
-        obj = self.eat_token()
+        # default: the caller is this object
+        this_obj = True
+        obj = self.type
 
-        if self.tokenizer.get_token() != '.':
-            obj = self.type
-            name = obj
+        # current token is name - maybe an object name
+        name = self.eat_token()
+
+        # if current token is "." so the name is actually an object
+        # and the next token is name of the subroutine
+        if self.tokenizer.get_token() == '.':
+            this_obj = False
+            obj = name
+
+            # current token is "."
+            self.eat_token()
+
+            # current token is the name of the subroutine
+            name = self.eat_token()
+
+        nArgs = 0
+
+        # push obj
+        if this_obj:
             self.writer.write_push(POINTER, 0)
-
+            nArgs += 1
         else:
-            self.eat_token()    # '.'
-            name = self.eat_token()     # the real name of the subroutine
-            self.writer.write_push(*self.find_symbol(obj))  # push obj
+            if self.find_symbol(obj, type=True) is not None:
+                self.writer.write_push(*self.find_symbol(obj))
+                obj = self.find_symbol(obj, type=True)
+                nArgs += 1
 
-        # current token is "(", dump it
+        # current token is "("
         self.eat_token()
 
         # count number of arguments for the call
-        nArgs = self.compile_expression_list() + 1
+        nArgs += self.compile_expression_list()
 
-        # current token is ")", dump it
+        # current token is ")"
         self.eat_token()
 
-        # # call foo nArgs
-        # if "." not in name:
-        #     name = self.type + "." + name
-        #     # push pointer 0
-        #     self.writer.write_pop(POINTER, 0)
-        #     nArgs += 1
-
-        if obj == self.type:
-            self.writer.write_call(self.type+"."+name, nArgs)
-        self.writer.write_call(self.find_symbol(obj, type=True), nArgs)
+        # call (obj.)?foo nArgs
+        self.writer.write_call(obj + "." + name, nArgs)
 
     # DONE
-    def compile_subroutineBody(self, name, is_constructor):
+    def compile_subroutineBody(self, name, subroutine_type):
         """ Compile a subroutineBody variables & statements"""
 
         # current token is "{", dump it
@@ -596,11 +627,18 @@ class CompilationEngine:
         local_var_count = self.methodSymbolTable.var_count(VAR)
         self.writer.write_function(name, local_var_count)
 
-        if is_constructor:
+        if subroutine_type == 'constructor':
             self.allocate()
 
+        elif subroutine_type == 'method':
+            # push argument 0
+            self.writer.write_push(ARG, 0)
+
+            # pop pointer 0
+            self.writer.write_pop(POINTER, 0)
+
         # // statements - recursive
-        self.compile_statements(is_constructor)
+        self.compile_statements(subroutine_type)
 
         # current token is "}", dump it
         self.eat_token()
